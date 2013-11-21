@@ -21,6 +21,12 @@
  * 
  * You should have received a copy of the GNU General Public License
  * along with tmLQCD.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *21/11/2013:
+ *changed the implementation to be based on tmLQCD functions that uses OpenMP
+ *instead of the BLAS implementation. This was done hoping that it will speed up
+ *runs on BG/Q with multi-threading. This could help particularly when v_max is large
+ *as is the case for physical point configurations.
  ***********************************************************************/
 /*******************************************************************************
  * Subroutine restart_X - This subroutine computes X*hVecs and places 
@@ -68,9 +74,11 @@
 void Zrestart_X(_Complex double  *X, int ldx, _Complex double  *hVecs, int nLocal, 
                int basisSize, int restartSize, _Complex double  *rwork, int rworkSize)
 {
+   //old implementation
+   /*
    char cN = 'N';
    int ONE = 1;
-   int i, k;  /* Loop variables */
+   int i, k;  // Loop variables 
    int AvailRows = min(rworkSize/restartSize, nLocal);
    _Complex double  tpone,tzero;
    tpone= +1.0e+00;  tzero=+0.0e+00;
@@ -78,11 +86,11 @@ void Zrestart_X(_Complex double  *X, int ldx, _Complex double  *hVecs, int nLoca
    i = 0;
 
    while (i < nLocal) {
-      /* Block matrix multiply */
+      // Block matrix multiply 
       _FT(zgemm)(&cN, &cN, &AvailRows, &restartSize, &basisSize, &tpone,
          &X[i], &ldx, hVecs, &basisSize, &tzero, rwork, &AvailRows ,1,1);
 
-      /* Copy the result in the desired location of X */
+      // Copy the result in the desired location of X *
       for (k=0; k < restartSize; k++) {
          _FT(zcopy)(&AvailRows, &rwork[AvailRows*k],&ONE, &X[i+ldx*k],&ONE);
       }
@@ -90,6 +98,21 @@ void Zrestart_X(_Complex double  *X, int ldx, _Complex double  *hVecs, int nLoca
       i = i+AvailRows;
       AvailRows = min(AvailRows, nLocal-i);
    }
+   */
+
+   int i,j;
+
+   //compute the new vectors
+   for(i=0; i<restartSize; i++)
+   {
+     mul(&rwork[i*ldx],hVecs[i*basisSize],&X[0],nLocal/12);
+     for(j=1; j<basisSize; j++)
+        assign_add_mul(&rwork[i*ldx], &X[j*ldx], hVecs[j+i*basisSize], nLocal/12);
+   }
+
+   //copy the result back to X
+   for(i=0; i<restartSize; i++)
+      assign(&X[i*ldx], &rwork[i*ldx], nLocal/12);  
 
 
 }

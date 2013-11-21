@@ -94,8 +94,8 @@
  *
  * 9. In the original code, there is a work array called ework which size was
  *    determined by the user and required to satisfy certain bounds. However, 
- *    this is fixed here by choosing esize to be 2 times the length of a long
- *    vector plus a block of size (2nev)^2. The ework array is of type complex *
+ *    this is fixed here by choosing esize to be (2nev+1) times the length of a long
+ *    vector. The ework array is of type complex *
  *    and for proper counting we have to multiply N by 12 because of the 12 
  *    components of each spinor (color and spin).  
  *
@@ -207,7 +207,8 @@ int incr_eigcg(const int N, const int nrhs,  spinor * const x, spinor * const b,
   #endif
  
   /*think more about this */
-  esize=2*12*N+4*nev*nev;  /* fixed size for ework used for restarting in eigcg*/
+  //esize=2*12*N+4*nev*nev;  /* fixed size for ework used for restarting in eigcg*/
+  esize=(2*nev+1)*12*LDN;    /* new size: fixed size for ework used for restarting in eigcg*/
 
   nrsf=4;  /*number of solver fields */
   
