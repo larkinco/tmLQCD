@@ -40,6 +40,8 @@
 #include "su3.h"
 #include "sse.h"
 #include "boundary.h"
+#include "gamma.h"
+#include "linalg_eo.h"
 #ifdef MPI
 # include "xchange/xchange.h"
 #endif
@@ -487,7 +489,8 @@ static inline void m3addandstore(spinor * restrict const r, spinor const * restr
 }
 
 /* this is the hopping part only */
-static inline void local_H(spinor * const rr, spinor const * const s, su3 const * restrict u, int * _idx, spinor * const restrict tmpr) {
+static inline void local_H(spinor * const rr, spinor const * const s, su3 const * restrict u, 
+			   int * _idx, spinor * const restrict tmpr) {
 
   int * idx = _idx;
 
@@ -1961,6 +1964,11 @@ void D_psi(spinor * const P, spinor * const Q){
     sm = (spinor *) Q +iy;
     um=&g_gauge_field[iy][3];
     m3addandstore(rr, sm, um, phase_3, &tmpr);
+    // this is for using Q in deflation FIXME
+    if(use_iQ_dfl) {
+      gamma5(rr, rr, 1);
+    }
+    // FIXME
   }
 #ifdef OMP
   } /* OpenMP closing brace */
@@ -2089,7 +2097,7 @@ void D_psi_prec(spinor * const P, spinor * const Q){
 /* the block local gauge field is assumed to be in the order  */
 /* that is needed int local_D, which means also that it is a  */
 /* double copy                                                */
-
+// CU: has problems with SSE2,3
 void Block_D_psi(block * blk, spinor * const rr, spinor * const s) {
   int i;
   spinor *r = rr;
@@ -2126,12 +2134,14 @@ void Block_D_psi(block * blk, spinor * const rr, spinor * const s) {
 #endif
 
     local_H(r, s, u, idx, &tmpr);
+    if(use_iQ_dfl) gamma5(r, r, 1);
 
     r++;
     t++;
     idx += 8;
     u += 8;
   }
+
   return;
 }
 
@@ -2270,11 +2280,13 @@ void Block_H_psi(block * blk, spinor * const rr, spinor * const s, const int eo)
 #endif
 
     local_H(r, s, u, eoidx, &tmpr);
+    if (use_iQ_dfl) gamma5(r, r, 1);
 
     r++;
     eoidx += 8;
     u += 8;
   }
+
   return;
 }
 
