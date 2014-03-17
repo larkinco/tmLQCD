@@ -26,6 +26,7 @@
 
 #ifndef _INVERT_EO_H
 #define _INVERT_EO_H
+#include "operator.h"
 
 int invert_eo(operator * const optr); //pass a pointer to the operator struct instead of the parameters.
 

@@ -23,7 +23,7 @@
 #ifndef _PION_NORM_H
 #define _PION_NORM_H
 
-void pion_norm(const int traj, const int id, const int ieo);
+void pion_norm(const int traj, const int id, const int ieo, const int opid);
 
 #endif
 

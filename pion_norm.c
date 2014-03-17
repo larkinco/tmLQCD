@@ -39,8 +39,12 @@
 #include "measurements.h"
 #include "pion_norm.h"
 #include "gettime.h"
+#include "operator.h"
 
-void pion_norm(const int traj, const int id, const int ieo) {
+//void pion_norm(const int traj, const int id, const int ieo) {
+void pion_norm(const int traj, const int id, const int ieo, const int opid) {
+
+  operator * const optr= &operator_list[opid];
   int i, j, z, zz, z0;
   double *Cpp;
   double res = 0.;
@@ -83,9 +87,11 @@ void pion_norm(const int traj, const int id, const int ieo) {
   
 
   /* invert on the stochastic source */
-  invert_eo(g_spinor_field[2], g_spinor_field[3], 
-            g_spinor_field[0], g_spinor_field[1],
-            1.e-14, measurement_list[id].max_iter, CG, 1, 0, ieo, 0, NULL, -1);
+  //invert_eo(g_spinor_field[2], g_spinor_field[3], 
+  //          g_spinor_field[0], g_spinor_field[1],
+  //          1.e-14, measurement_list[id].max_iter, CG, 1, 0, ieo, 0, NULL, -1);
+
+  invert_eo(optr);
 
   /* now we bring it to normal format */
   /* here we use implicitly DUM_MATRIX and DUM_MATRIX+1 */
