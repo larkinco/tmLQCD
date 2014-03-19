@@ -25,6 +25,8 @@ void Msap_eo(spinor * const P, spinor * const Q, const int Ncy, const int Niter)
 void CGeoSmoother(spinor * const P, spinor * const Q, const int Ncy, const int dummy);
 void Mtm_plus_block_psi(spinor * const l, spinor * const k, const int i);
 void Mtm_plus_sym_block_psi(spinor * const l, spinor * const k, const int i);
+void Msw_plus_block_psi(spinor * const l, spinor * const k, const int i);
+void Msw_plus_sym_block_psi(spinor * const l, spinor * const k, const int i);
 
 void CGeoSmoother(spinor * const P, spinor * const Q, const int Ncy, const int dummy);
 #endif

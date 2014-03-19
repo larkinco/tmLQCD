@@ -44,6 +44,7 @@
 #include "cgne4complex.h"
 #include "generate_dfl_subspace.h"
 #include "operator/tm_operators.h"
+#include "operator/clovertm_operators.h"
 #include "boundary.h"
 #include "Msap.h"
 #include "mr.h"
@@ -75,7 +76,7 @@ static void alloc_dfl_projector();
  * compute sum of basis vectors times _Complex double element
  * create global vector */
 
-/* this is phi_k A^{-1}_{kl} (phi_k, in) */
+/* this is phi_k A^{-1}_{kl} (phi_l, in) */
 void project(spinor * const out, spinor * const in) {
   int i,j, i_e, i_o, iter;
   int evenodd = 1;
@@ -376,11 +377,20 @@ void project2(spinor * const out, spinor * const in) {
 // and nu the M_sap cycles here called Ncy
 
 void mg_precon(spinor * const out, spinor * const in) {
+
+  //extend to the clover case
+  void (*applyD_psi)(spinor * const, spinor * const);
+  if(g_c_sw > 0.0)
+    applyD_psi = &Dsw_psi;
+  else
+    applyD_psi = &D_psi;
+
   // phi = PD_c^{-1} P^dagger in
   project(out, in);
   // in - D*phi 
   // need to DUM_MATRIX+2,3 because in Msap_eo DUM_MATRIX+0,1 is used
-  D_psi(g_spinor_field[DUM_MATRIX+2], out);
+  //D_psi(g_spinor_field[DUM_MATRIX+2], out);
+  (*applyD_psi)(g_spinor_field[DUM_MATRIX+2], out);
   diff(g_spinor_field[DUM_MATRIX+2], in, g_spinor_field[DUM_MATRIX+2], VOLUME);
   // apply M_SAP
   zero_spinor_field(g_spinor_field[DUM_MATRIX+3], VOLUME);
@@ -395,7 +405,11 @@ void mg_precon_cg(spinor * const out, spinor * const in) {
   project(out, in);
   // in - D*phi 
   // need to DUM_MATRIX+2,3 because in Msap_eo DUM_MATRIX+0,1 is used
-  D_psi(g_spinor_field[DUM_MATRIX+2], out);
+  if(g_c_sw > 0.0)
+     Dsw_psi(g_spinor_field[DUM_MATRIX+2], out);
+  else
+     D_psi(g_spinor_field[DUM_MATRIX+2], out);
+
   diff(g_spinor_field[DUM_MATRIX+2], in, g_spinor_field[DUM_MATRIX+2], VOLUME);
   // apply M_SAP
   zero_spinor_field(g_spinor_field[DUM_MATRIX+3], VOLUME);
@@ -409,8 +423,11 @@ void mg_Qsq_precon1(spinor * const out, spinor * const in) {
   double mu_save = g_mu;
   g_mu = g_mu1;
   zero_spinor_field(out, VOLUME);
-  cg_her(out, in, 10, 1.e-14, 
-	 1, VOLUME, &Q_pm_psi);
+  if(g_c_sw > 0.0)
+     cg_her(out, in, 10, 1.e-14, 1, VOLUME, &Qsw_pm_psi);
+  else
+     cg_her(out, in, 10, 1.e-14, 1, VOLUME, &Q_pm_psi);
+
   g_mu = mu_save;
   return;
 }
@@ -419,11 +436,21 @@ void mg_Qsq_precon3(spinor * const out, spinor * const in) {
   double mu_save = g_mu;
   g_mu = g_mu1;
   zero_spinor_field(g_spinor_field[DUM_MATRIX+3], VOLUME);
-  cg_her(g_spinor_field[DUM_MATRIX+3], in, 30, g_mu*g_mu, 
-	 1, VOLUME, &Q_pm_psi);
+  if(g_c_sw > 0.0)
+     cg_her(g_spinor_field[DUM_MATRIX+3], in, 30, g_mu*g_mu, 
+	 1, VOLUME, &Qsw_pm_psi);
+  else
+     cg_her(g_spinor_field[DUM_MATRIX+3], in, 30, g_mu*g_mu, 
+        	 1, VOLUME, &Q_pm_psi);
+
   zero_spinor_field(g_spinor_field[DUM_MATRIX+2], VOLUME);
-  cg_her(g_spinor_field[DUM_MATRIX+2], g_spinor_field[DUM_MATRIX+3], 30, g_mu*g_mu, 
+  if(g_c_sw > 0.0)
+     cg_her(g_spinor_field[DUM_MATRIX+2], g_spinor_field[DUM_MATRIX+3], 30, g_mu*g_mu, 
+	 1, VOLUME, &Qsw_pm_psi);
+  else
+     cg_her(g_spinor_field[DUM_MATRIX+2], g_spinor_field[DUM_MATRIX+3], 30, g_mu*g_mu, 
 	 1, VOLUME, &Q_pm_psi);
+
   mul_r(g_spinor_field[DUM_MATRIX+2], g_mu*g_mu-mu_save*mu_save, g_spinor_field[DUM_MATRIX+2], VOLUME);
   add(out, g_spinor_field[DUM_MATRIX+3], g_spinor_field[DUM_MATRIX+2], VOLUME);
   g_mu = mu_save;
@@ -437,13 +464,21 @@ void mg_Qsq_precon(spinor * const out, spinor * const in) {
   //assign(out, in, VOLUME);
   // in - Q_pm*phi 
   // need to DUM_MATRIX+2,3 because in Msap_eo DUM_MATRIX+0,1 is used
-  Q_pm_psi(g_spinor_field[DUM_MATRIX+3], out);
+  if(g_c_sw >0.0)
+    Qsw_pm_psi(g_spinor_field[DUM_MATRIX+3], out);
+  else
+    Q_pm_psi(g_spinor_field[DUM_MATRIX+3], out);
+
   diff(g_spinor_field[DUM_MATRIX+2], in, g_spinor_field[DUM_MATRIX+3], VOLUME);
   // apply (Q^2)^-1
   zero_spinor_field(g_spinor_field[DUM_MATRIX+3], VOLUME);
 
   g_mu = g_mu1;
-  cg_her(g_spinor_field[DUM_MATRIX+3], g_spinor_field[DUM_MATRIX+2], 10, 1.e-14, 
+  if(g_c_sw > 0.0)
+    cg_her(g_spinor_field[DUM_MATRIX+3], g_spinor_field[DUM_MATRIX+2], 10, 1.e-14, 
+	 1, VOLUME, &Qsw_pm_psi);
+  else
+    cg_her(g_spinor_field[DUM_MATRIX+3], g_spinor_field[DUM_MATRIX+2], 10, 1.e-14, 
 	 1, VOLUME, &Q_pm_psi);
   g_mu = mu_save;
   add(out, g_spinor_field[DUM_MATRIX+3], out, VOLUME);
@@ -456,7 +491,11 @@ void mg_Qsq_precon2(spinor * const out, spinor * const in) {
   //assign(out, in, VOLUME);
   // in - Q_pm*phi 
   // need to DUM_MATRIX+2,3 because in Msap_eo DUM_MATRIX+0,1 is used
-  Q_pm_psi(g_spinor_field[DUM_MATRIX+3], out);
+  if(g_c_sw > 0.0)
+    Qsw_full_pm_psi(g_spinor_field[DUM_MATRIX+3], out);
+  else
+    Q_pm_psi(g_spinor_field[DUM_MATRIX+3], out);
+
   diff(g_spinor_field[DUM_MATRIX+2], in, g_spinor_field[DUM_MATRIX+3], VOLUME);
   // apply (Q^2)^-1
   zero_spinor_field(g_spinor_field[DUM_MATRIX+3], VOLUME);
@@ -466,11 +505,21 @@ void mg_Qsq_precon2(spinor * const out, spinor * const in) {
   //	 1, VOLUME, &Q_pm_psi);
 
   zero_spinor_field(g_spinor_field[DUM_MATRIX+3], VOLUME);
-  cg_her(g_spinor_field[DUM_MATRIX+3], g_spinor_field[DUM_MATRIX+2], 30, g_mu*g_mu, 
+  if(g_c_sw > 0.0)
+     cg_her(g_spinor_field[DUM_MATRIX+3], g_spinor_field[DUM_MATRIX+2], 30, g_mu*g_mu, 
+	 1, VOLUME, &Qsw_full_pm_psi);
+  else
+     cg_her(g_spinor_field[DUM_MATRIX+3], g_spinor_field[DUM_MATRIX+2], 30, g_mu*g_mu, 
 	 1, VOLUME, &Q_pm_psi);
+
   zero_spinor_field(g_spinor_field[DUM_MATRIX+2], VOLUME);
-  cg_her(g_spinor_field[DUM_MATRIX+2], g_spinor_field[DUM_MATRIX+3], 30, g_mu*g_mu, 
+  if(g_c_sw > 0.0)
+     cg_her(g_spinor_field[DUM_MATRIX+2], g_spinor_field[DUM_MATRIX+3], 30, g_mu*g_mu, 
+	 1, VOLUME, &Qsw_full_pm_psi);
+  else
+     cg_her(g_spinor_field[DUM_MATRIX+2], g_spinor_field[DUM_MATRIX+3], 30, g_mu*g_mu, 
 	 1, VOLUME, &Q_pm_psi);
+
   mul_r(g_spinor_field[DUM_MATRIX+2], g_mu*g_mu-mu_save*mu_save, g_spinor_field[DUM_MATRIX+2], VOLUME);
   add(g_spinor_field[DUM_MATRIX+3], g_spinor_field[DUM_MATRIX+3], g_spinor_field[DUM_MATRIX+2], VOLUME);
   g_mu = mu_save;
@@ -483,15 +532,22 @@ void project_left(spinor * const out, spinor * const in) {
   /* out = P_L in = in - D proj in */ 
 
   project(out, in);
-  D_psi(g_spinor_field[DUM_MATRIX], out);
+  if(g_c_sw > 0.0)
+     Dsw_psi(g_spinor_field[DUM_MATRIX], out);
+  else
+     D_psi(g_spinor_field[DUM_MATRIX], out);
+
   diff(out, in, g_spinor_field[DUM_MATRIX], VOLUME);
   return;
 }
 
 void project_right(spinor * const out, spinor * const in) {
   /* out = P_R in = in - proj D in */
+  if(g_c_sw > 0.0)
+     Dsw_psi(out, in);
+  else
+     D_psi(out, in);
 
-  D_psi(out, in);
   project(g_spinor_field[DUM_MATRIX], out);
   diff(out, in, g_spinor_field[DUM_MATRIX], VOLUME);
   return;
@@ -499,14 +555,20 @@ void project_right(spinor * const out, spinor * const in) {
 
 void project_left_D(spinor * const out, spinor * const in) {
   /* out = P_L D in  = D in - D proj D in*/
-  D_psi(g_spinor_field[DUM_MATRIX+1], in);
+  if(g_c_sw > 0.0)
+    Dsw_psi(g_spinor_field[DUM_MATRIX+1], in);
+  else
+    D_psi(g_spinor_field[DUM_MATRIX+1], in);
   project_left(out, g_spinor_field[DUM_MATRIX+1]);
   return;
 }
 
 void D_project_right(spinor * const out, spinor * const in) {
   project_right(g_spinor_field[DUM_MATRIX+1], in);
-  D_psi(out, g_spinor_field[DUM_MATRIX+1]);
+  if(g_c_sw > 0.0)
+    Dsw_psi(out, g_spinor_field[DUM_MATRIX+1]);
+  else
+    D_psi(out, g_spinor_field[DUM_MATRIX+1]);
   return;
 }
 
@@ -772,7 +834,11 @@ int check_projectors(const int repro) {
 
   project2(work_fields[1], work_fields[0]);
   project(work_fields[2], work_fields[1]);
-  D_psi(work_fields[3], work_fields[2]);
+  if(g_c_sw > 0.0)
+    Dsw_psi(work_fields[3], work_fields[2]);
+  else
+    D_psi(work_fields[3], work_fields[2]);
+
   project2(work_fields[2], work_fields[3]);
   diff(work_fields[3], work_fields[2], work_fields[1], VOLUME);
   nrm = square_norm(work_fields[3], VOLUME, 1);
@@ -782,7 +848,11 @@ int check_projectors(const int repro) {
   }
 
   project2(work_fields[1], work_fields[0]);
-  D_psi(work_fields[2], work_fields[1]);
+  if(g_c_sw > 0.0)
+    Dsw_psi(work_fields[2], work_fields[1]);
+  else
+    D_psi(work_fields[2], work_fields[1]);
+
   project(work_fields[3], work_fields[2]);
   project2(work_fields[2], work_fields[3]);
   diff(work_fields[3], work_fields[2], work_fields[1], VOLUME);
@@ -794,7 +864,10 @@ int check_projectors(const int repro) {
 
   invert_little_D_spinor(work_fields[1], work_fields[0]);
   project2(work_fields[2], work_fields[1]);
-  D_psi(work_fields[3], work_fields[2]);
+  if(g_c_sw > 0.0)
+    Dsw_psi(work_fields[3], work_fields[2]);
+  else
+    D_psi(work_fields[3], work_fields[2]);
   project2(work_fields[2], work_fields[3]);
   project2(work_fields[1], work_fields[0]);
   diff(work_fields[3], work_fields[2], work_fields[1], VOLUME);
@@ -851,7 +924,10 @@ int check_projectors(const int repro) {
     reconstruct_global_field_GEN(work_fields[1], wphi, nb_blocks);
   }
   apply_little_D_spinor(work_fields[3], work_fields[1]);
-  D_psi(work_fields[2], work_fields[1]);
+  if(g_c_sw > 0.0)
+    Dsw_psi(work_fields[2], work_fields[1]);
+  else
+    D_psi(work_fields[2], work_fields[1]);
 
   if (g_cart_id == 0 && g_debug_level > 4){
     v = calloc(nb_blocks * 9 * g_N_s, sizeof(_Complex double));
@@ -881,7 +957,10 @@ int check_projectors(const int repro) {
 
   reconstruct_global_field_GEN_ID(work_fields[1], block_list, 0, nb_blocks);
   apply_little_D_spinor(work_fields[3], work_fields[1]);
-  D_psi(work_fields[2], work_fields[1]);
+  if(g_c_sw > 0.0)
+    Dsw_psi(work_fields[2], work_fields[1]);
+  else
+    D_psi(work_fields[2], work_fields[1]);
   if (!g_proc_id && g_debug_level > 4){
     v = calloc(nb_blocks * 9 * g_N_s, sizeof(_Complex double));
     split_global_field_GEN(phi, work_fields[2],nb_blocks);
@@ -903,7 +982,10 @@ int check_projectors(const int repro) {
 
   apply_little_D_spinor(work_fields[3], work_fields[0]);
   project2(work_fields[1], work_fields[0]);
-  D_psi(work_fields[2], work_fields[1]);
+  if(g_c_sw > 0.0)
+    Dsw_psi(work_fields[2], work_fields[1]);
+  else
+    D_psi(work_fields[2], work_fields[1]);
   project2(work_fields[1], work_fields[2]);
   diff(work_fields[2], work_fields[3], work_fields[1], VOLUME);
   nrm = square_norm(work_fields[2], VOLUME, 1);
@@ -1149,7 +1231,10 @@ void check_local_D(const int repro)
 
   for(j = 0; j < nb_blocks; j++) {
     zero_spinor_field(work_fields[0], VOLUME);
-    Block_D_psi(&block_list[j], work_fields[6], block_list[j].basis[0]);
+    if(g_c_sw > 0.0)
+       Block_Dsw_psi(&block_list[j], work_fields[6], block_list[j].basis[0]);
+    else
+       Block_D_psi(&block_list[j], work_fields[6], block_list[j].basis[0]);
 
     /* Now test the block hopping matrix */
     /* split into even/odd sites         */
@@ -1157,12 +1242,20 @@ void check_local_D(const int repro)
 
     /* Even sites */
     Block_H_psi(&block_list[j], g_spinor_field[DUM_DERI], work_fields[1], EO);
-    assign_mul_one_pm_imu(work_fields[2], work_fields[0], 1., vol); 
+    if(g_c_sw > 0.0)
+      assign_mul_one_sw_pm_imu_N(work_fields[2], work_fields[0], vol);
+    else 
+      assign_mul_one_pm_imu(work_fields[2], work_fields[0], 1., vol);
+ 
     assign_add_mul_r(work_fields[2], g_spinor_field[DUM_DERI], 1., vol);
 
     /* Odd sites */
     Block_H_psi(&block_list[j], g_spinor_field[DUM_DERI], work_fields[0], OE);
-    assign_mul_one_pm_imu(work_fields[3], work_fields[1], 1., vol); 
+    if(g_c_sw > 0.0)
+       assign_mul_one_sw_pm_imu_N(work_fields[3], work_fields[1], vol);
+    else 
+      assign_mul_one_pm_imu(work_fields[3], work_fields[1], 1., vol);
+ 
     assign_add_mul_r(work_fields[3], g_spinor_field[DUM_DERI], 1., vol);
 
     /* convert back to block spinor */
@@ -1187,7 +1280,11 @@ void check_local_D(const int repro)
   random_spinor_field_lexic(work_fields[0], repro, RN_GAUSS);
   zero_spinor_field(work_fields[1], VOLUME);
   Msap(work_fields[1], work_fields[0], 5, 3);
-  D_psi(work_fields[2], work_fields[1]);
+  if(g_c_sw>0.0)
+    Dsw_psi(work_fields[2], work_fields[1]);
+  else
+   D_psi(work_fields[2], work_fields[1]);
+
   diff(work_fields[3], work_fields[2], work_fields[0], VOLUME);
   nrm = square_norm(work_fields[3], VOLUME, 1);
   if(g_proc_id == 0) {
@@ -1196,7 +1293,12 @@ void check_local_D(const int repro)
 
   zero_spinor_field(work_fields[1], VOLUME);
   Msap_eo(work_fields[1], work_fields[0], 5, 3);
-  D_psi(work_fields[2], work_fields[1]);
+  
+  if(g_c_sw > 0.0)
+    Dsw_psi(work_fields[2], work_fields[1]);
+  else
+    D_psi(work_fields[2], work_fields[1]);
+
   diff(work_fields[3], work_fields[2], work_fields[0], VOLUME);
   nrm = square_norm(work_fields[3], VOLUME, 1);
   if(g_proc_id == 0) {
@@ -1211,23 +1313,38 @@ void check_local_D(const int repro)
     block_convert_lexic_to_eo(r[0], r[1], block_list[j].basis[0]);
     /* check even/odd inversion for Block_D_psi*/
     /* varphi_e in r[2] */
-    assign_mul_one_pm_imu_inv(r[2], r[0], +1., vol);
+    if(g_c_sw > 0.0)
+      assign_mul_one_sw_pm_imu_inv_N(r[2], r[0], vol);
+    else
+      assign_mul_one_pm_imu_inv(r[2], r[0], +1., vol);
+
     Block_H_psi(&block_list[j], r[3], r[2], OE);
     /* a_odd = a_odd + b_odd */
     /* varphi_o in r[3] */
     assign_mul_add_r(r[3], -1., r[1], vol);
     /* psi_o in r[1] */
-    mrblk(r[1], r[3], 3, 1.e-31, 1, vol, &Mtm_plus_block_psi, j);
+    if(g_c_sw > 0.0)
+       mrblk(r[1], r[3], 3, 1.e-31, 1, vol, &Msw_plus_block_psi, j);
+    else
+       mrblk(r[1], r[3], 3, 1.e-31, 1, vol, &Mtm_plus_block_psi, j);
 
     Block_H_psi(&block_list[j], r[0], r[1], EO);
-    mul_one_pm_imu_inv(r[0], +1., vol);
+    if(g_c_sw > 0.0)
+      mul_one_sw_pm_imu_inv(r[0], +1., vol);
+    else
+      mul_one_pm_imu_inv(r[0], +1., vol);
+
     /* a_even = a_even + b_even */
     /* check this sign +1 seems to be right in Msap_eo */
     assign_add_mul_r(r[2], r[0], -1., vol);
 
     block_convert_eo_to_lexic(r[4], r[2], r[1]);
 
-    Block_D_psi(&block_list[j], r[5], r[4]);
+    if(g_c_sw > 0.0)
+       Block_Dsw_psi(&block_list[j], r[5], r[4]);
+    else
+       Block_D_psi(&block_list[j], r[5], r[4]);
+
     diff(r[0], block_list[j].basis[0], r[5], block_list[j].volume);
     nrm = square_norm(r[0], block_list[j].volume, 0);
     if(g_proc_id == 0) {
@@ -1238,24 +1355,39 @@ void check_local_D(const int repro)
     block_convert_lexic_to_eo(r[0], r[1], block_list[j].basis[0]);
     /* check even/odd inversion for Block_D_psi*/
     /* varphi_e in r[2] */
-    assign_mul_one_pm_imu_inv(r[2], r[0], +1., vol);
+    if(g_c_sw > 0.0)
+       assign_mul_one_sw_pm_imu_inv_N(r[2], r[0], vol);
+    else
+       assign_mul_one_pm_imu_inv(r[2], r[0], +1., vol);
+
     Block_H_psi(&block_list[j], r[3], r[2], OE);
     /* a_odd = a_odd + b_odd */
     /* varphi_o in r[3] */
     assign_mul_add_r(r[3], -1., r[1], vol);
     /* psi_o in r[1] */
-    mul_one_pm_imu_inv(r[3], +1., vol); 
-    mrblk(r[1], r[3], 3, 1.e-31, 1, vol, &Mtm_plus_sym_block_psi, j);
+    if(g_c_sw > 0.0){
+       mul_one_sw_pm_imu_inv(r[3], +1., vol); 
+       mrblk(r[1], r[3], 3, 1.e-31, 1, vol, &Msw_plus_sym_block_psi, j);}
+    else{
+       mul_one_pm_imu_inv(r[3], +1., vol); 
+       mrblk(r[1], r[3], 3, 1.e-31, 1, vol, &Mtm_plus_sym_block_psi, j);}
 
     Block_H_psi(&block_list[j], r[0], r[1], EO);
-    mul_one_pm_imu_inv(r[0], +1., vol);
+    if(g_c_sw > 0.0)
+      mul_one_sw_pm_imu_inv(r[0], +1., vol);
+    else
+      mul_one_pm_imu_inv(r[0], +1., vol);
+
     /* a_even = a_even + b_even */
     /* check this sign +1 seems to be right in Msap_eo */
     assign_add_mul_r(r[2], r[0], -1., vol);
 
     block_convert_eo_to_lexic(r[4], r[2], r[1]);
+    if(g_c_sw > 0.0)
+       Block_Dsw_psi(&block_list[j], r[5], r[4]);
+    else
+       Block_D_psi(&block_list[j], r[5], r[4]);
 
-    Block_D_psi(&block_list[j], r[5], r[4]);
     diff(r[0], block_list[j].basis[0], r[5], block_list[j].volume);
     nrm = square_norm(r[0], block_list[j].volume, 0);
     if(g_proc_id == 0) {

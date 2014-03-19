@@ -52,10 +52,12 @@
 #include"solver/matrix_mult_typedef.h"
 #include"su3.h"
 
+
 int fgmres(spinor * const P,spinor * const Q, 
 	   const int m, const int max_restarts,
 	   const double eps, const int rel_prec, 
 	   const int N, const int precon, matrix_mult f);
+
 
 
 #endif

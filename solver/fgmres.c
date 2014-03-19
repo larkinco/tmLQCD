@@ -70,10 +70,12 @@ static _Complex double * c;
 static double * s;
 extern int dfl_poly_iter;
 
+
 int fgmres(spinor * const P,spinor * const Q, 
 	   const int m, const int max_restarts,
 	   const double eps_sq, const int rel_prec,
 	   const int N, const int precon, matrix_mult f){
+
 
   int restart, i, j, k;
   double beta, eps, norm;
@@ -124,6 +126,7 @@ int fgmres(spinor * const P,spinor * const Q,
       }
       else if(precon == 1) {
 	zero_spinor_field(Z[j], N);
+	//Msap_eo(Z[j], V[j], 5, 3);
 	Msap_eo(Z[j], V[j], 5, 3);
       }
       else if(precon == 2) {

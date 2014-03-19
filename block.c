@@ -757,6 +757,13 @@ void block_contract_basis(int const idx, int const vecnum, int const dir, spinor
 }
 
 void alt_block_compute_little_D() {
+
+  void (*applyD_psi) (spinor * const, spinor * const);
+  if(g_c_sw > 0.0)
+     applyD_psi = &Dsw_psi; 
+  else
+     applyD_psi = &D_psi;
+
   int i, j, k, l;
   spinor *_rec, *rec, *_app, *app, *zero;
   spinor *psi, **psi_blocks;
@@ -792,7 +799,8 @@ void alt_block_compute_little_D() {
 	if (g_cart_id == k) {
 	  reconstruct_global_field_GEN_ID(rec, block_list, i, nb_blocks);
 	}
-	D_psi(app, rec);
+	//D_psi(app, rec);
+        (*applyD_psi)(app, rec);
 	split_global_field_GEN(psi_blocks, app, nb_blocks);
 	if (g_cart_id == k) {
 	  block_contract_basis(0, i, NONE, psi);
@@ -909,6 +917,15 @@ void alt_block_compute_little_D() {
 
 /* checked CU */
 void compute_little_D_diagonal(const int mul_g5) {
+
+
+  void (*applyBlock_D_psi) (block *, spinor * const, spinor * const);
+  if(g_c_sw > 0.0)
+     applyBlock_D_psi = &Block_Dsw_psi; 
+  else
+     applyBlock_D_psi = &Block_D_psi;
+
+
   int i,j, blk;
   spinor * tmp, * _tmp;
   _Complex double * M;
@@ -922,7 +939,7 @@ void compute_little_D_diagonal(const int mul_g5) {
   for(blk = 0; blk < nb_blocks; blk++) {
     M = block_list[blk].little_dirac_operator;
     for(i = 0; i < g_N_s; i++) {
-      Block_D_psi(&block_list[blk], tmp, block_list[blk].basis[i]);
+      (*applyBlock_D_psi)(&block_list[blk], tmp, block_list[blk].basis[i]);
       if(mul_g5) gamma5(tmp, tmp, block_list[blk].volume);
       for(j = 0; j < g_N_s; j++) {
 	M[i * g_N_s + j]  = scalar_prod(block_list[blk].basis[j], tmp, block_list[blk].volume, 0);
@@ -981,6 +998,14 @@ void compute_little_D(const int mul_g5) {
      Adaptation by Claude Tadonki (claude.tadonki@u-psud.fr)
      Date: May 2010
   */
+
+  void (*applyBlock_D_psi) (block *, spinor * const, spinor * const);
+  if(g_c_sw > 0.0)
+     applyBlock_D_psi = &Block_Dsw_psi; 
+  else
+     applyBlock_D_psi = &Block_D_psi;
+
+
   spinor *scratch, * temp, *_scratch;
   spinor *r, *s;
   su3 * u;
@@ -1010,7 +1035,7 @@ void compute_little_D(const int mul_g5) {
   for(blk = 0; blk < nb_blocks; blk++) {
     M = block_list[blk].little_dirac_operator;
     for(i = 0; i < g_N_s; i++) {
-      Block_D_psi(&block_list[blk], scratch, block_list[blk].basis[i]);
+      (*applyBlock_D_psi)(&block_list[blk], scratch, block_list[blk].basis[i]);
       if(mul_g5) gamma5(scratch, scratch, block_list[blk].volume);
       for(j = 0; j < g_N_s; j++) {
 	M[i * g_N_s + j]  = scalar_prod(block_list[blk].basis[j], scratch, block_list[blk].volume, 0);

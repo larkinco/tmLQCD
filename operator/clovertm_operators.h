@@ -39,10 +39,23 @@ void Msw_full_minus_psi(spinor * const l, spinor * const k);
 
 void assign_mul_one_sw_pm_imu(const int ieo, spinor * const k, const spinor * const l, const double mu);
 void assign_mul_one_sw_pm_imu_inv(const int ieo, spinor * const k, const spinor * const l, const double mu);
+
+
+//Abdou
+//------------
+//The following two functions applies only to N elements of the spinors
+void assign_mul_one_sw_pm_imu_N(spinor * const k, const spinor * const l, const int N);
+void assign_mul_one_sw_pm_imu_inv_N(spinor * const k, const spinor * const l, const int N);
+
+void mul_one_sw_pm_imu(spinor * const k, const double _sign, const int N);
+void mul_one_sw_pm_imu_sub_mul(spinor * const k, spinor * const l, spinor * const j, const double _sign, const int N);
+void mul_one_sw_pm_imu_inv(spinor * const k, const double _sign, const int  N);
+
 void Mee_sw_psi(spinor * const k, const spinor * const l, const double mu);
 void Mee_sw_inv_psi(spinor * const k, const spinor * const l, const double mu);
 void Msw_full(spinor * const Even_new, spinor * const Odd_new, 
 	      spinor * const Even, spinor * const Odd);
+//-------------
 void clover_inv(spinor * const l, const int tau3sign, const double mu);
 void Qsw_psi(spinor * const l, spinor * const k);
 void Qsw_plus_psi(spinor * const l, spinor * const k);
@@ -54,6 +67,8 @@ void Msw_plus_psi(spinor * const l, spinor * const k);
 void Msw_minus_psi(spinor * const l, spinor * const k);
 void H_eo_sw_inv_psi(spinor * const l, spinor * const k, const int ieo, const int tau3sign, const double mu);
 void init_sw_fields();
+
+void Qsw_pm_psi(spinor * const l, spinor * const k);
 
 void clover_nd(const int ieo, 
 	       spinor * const l_s, spinor * const l_c, 

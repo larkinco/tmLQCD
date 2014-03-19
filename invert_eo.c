@@ -445,10 +445,12 @@ int invert_eo(operator * const optr) {
     //else if (solver_flag == DFLFGMRES) {
     else if (optr->solver == DFLFGMRES) {
       if(g_proc_id == 0) {printf("# Using deflated FGMRES solver! m = %d\n", gmres_m_parameter); fflush(stdout);}
-      //iter = fgmres(g_spinor_field[DUM_DERI+1], g_spinor_field[DUM_DERI], gmres_m_parameter, 
-      //	    max_iter/gmres_m_parameter, precision, rel_prec, VOLUME, 2, &D_psi);
-      iter = fgmres(g_spinor_field[DUM_DERI+1], g_spinor_field[DUM_DERI], gmres_m_parameter, 
-		    optr->maxiter/gmres_m_parameter, optr->prop_precision, optr->rel_prec, VOLUME, 2, optr->applyMp);
+      if(g_c_sw > 0.0)
+        iter = fgmres(g_spinor_field[DUM_DERI+1], g_spinor_field[DUM_DERI], gmres_m_parameter, 
+      	              optr->maxiter/gmres_m_parameter, optr->prop_precision, optr->rel_prec, VOLUME, 2, &Dsw_psi);
+      else
+        iter = fgmres(g_spinor_field[DUM_DERI+1], g_spinor_field[DUM_DERI], gmres_m_parameter, 
+		    optr->maxiter/gmres_m_parameter, optr->prop_precision, optr->rel_prec, VOLUME, 2, &D_psi);
     }
 /*
     else if (solver_flag == QSQFGMRES) {
