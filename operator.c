@@ -85,8 +85,8 @@ int add_operator(const int type) {
   optr->sloppy_precision = _default_g_sloppy_precision_flag;
   optr->coefs = NULL;
   optr->rel_prec = _default_g_relative_precision_flag;
-  optr->eps_sq = _default_solver_precision;
-  optr->maxiter = _default_max_solver_iterations;
+  optr->eps_sq   = _default_solver_precision;
+  optr->maxiter  = _default_max_solver_iterations;
   optr->even_odd_flag = _default_even_odd_flag;
   optr->solver = _default_solver_flag;
   optr->mubar = _default_g_mubar;
@@ -106,18 +106,18 @@ int add_operator(const int type) {
   optr->conf_input = _default_gauge_input_filename;
   optr->no_extra_masses = 0;
 
-  optr->applyM = &dummy_M;
-  optr->applyMee = &dummy_Mee;
+  optr->applyM      = &dummy_M;
+  optr->applyMee    = &dummy_Mee;
   optr->applyMeeInv = &dummy_Mee;
-  optr->applyQ = &dummy_M;
-  optr->applyQp = &dummy_D;
-  optr->applyQm = &dummy_D;
-  optr->applyMp = &dummy_D;
-  optr->applyMm = &dummy_D;
-  optr->applyQsq = &dummy_D;
-  optr->applyDbQsq = &dummy_DbD;
+  optr->applyQ      = &dummy_M;
+  optr->applyQp     = &dummy_D;
+  optr->applyQm     = &dummy_D;
+  optr->applyMp     = &dummy_D;
+  optr->applyMm     = &dummy_D;
+  optr->applyQsq    = &dummy_D;
+  optr->applyDbQsq  = &dummy_DbD;
 
-  optr->inverter = &op_invert;
+  optr->inverter   = &op_invert;
   optr->write_prop = &op_write_prop;
 
   /* Overlap needs special treatment */
@@ -164,18 +164,18 @@ int init_operators() {
 	if(optr->even_odd_flag) {
           optr->applyMee    = &Mee_psi;
           optr->applyMeeInv = &Mee_inv_psi;
-	  optr->applyQp = &Qtm_plus_psi;
-	  optr->applyQm = &Qtm_minus_psi;
-	  optr->applyQsq = &Qtm_pm_psi;
-	  optr->applyMp = &Mtm_plus_psi;
-	  optr->applyMm = &Mtm_minus_psi;
+	  optr->applyQp     = &Qtm_plus_psi;
+	  optr->applyQm     = &Qtm_minus_psi;
+	  optr->applyQsq    = &Qtm_pm_psi;
+	  optr->applyMp     = &Mtm_plus_psi;
+	  optr->applyMm     = &Mtm_minus_psi;
 	}
 	else {
-	  optr->applyQp = &Q_plus_psi;
-	  optr->applyQm = &Q_minus_psi;
-	  optr->applyQsq = &Q_pm_psi;
-	  optr->applyMp = &D_psi;
-	  optr->applyMm = &M_minus_psi;
+	  optr->applyQp   = &Q_plus_psi;
+	  optr->applyQm   = &Q_minus_psi;
+	  optr->applyQsq  = &Q_pm_psi;
+	  optr->applyMp   = &D_psi;
+	  optr->applyMm   = &M_minus_psi;
 	}
 	if(optr->solver == 12) {
 	  if (g_cart_id == 0 && optr->even_odd_flag == 1)
@@ -195,18 +195,18 @@ int init_operators() {
         if(optr->even_odd_flag) {
           optr->applyMee    = &Mee_sw_psi;
           optr->applyMeeInv = &Mee_sw_inv_psi;
-          optr->applyQp = &Qsw_plus_psi;
-          optr->applyQm = &Qsw_minus_psi;
-          optr->applyQsq = &Qsw_pm_psi;
-          optr->applyMp = &Msw_plus_psi;
-          optr->applyMm = &Msw_minus_psi;
+          optr->applyQp     = &Qsw_plus_psi;
+          optr->applyQm     = &Qsw_minus_psi;
+          optr->applyQsq    = &Qsw_pm_psi;
+          optr->applyMp     = &Msw_plus_psi;
+          optr->applyMm     = &Msw_minus_psi;
         }
         else {
-          optr->applyQp = &Qsw_full_plus_psi;
-          optr->applyQm = &Qsw_full_minus_psi;
+          optr->applyQp  = &Qsw_full_plus_psi;
+          optr->applyQm  = &Qsw_full_minus_psi;
           optr->applyQsq = &Qsw_full_pm_psi;
-          optr->applyMp = &Dsw_psi;
-          optr->applyMm = &Msw_full_minus_psi;
+          optr->applyMp  = &Dsw_psi;
+          optr->applyMm  = &Msw_full_minus_psi;
         }
         if(optr->solver == 12) {
           if (g_cart_id == 0 && optr->even_odd_flag == 1)
@@ -280,6 +280,7 @@ void op_invert(const int op_id, const int index_start, const int write_prop) {
   boundary(g_kappa);
 
   atime = gettime();
+  //------------------------------
   if(optr->type == TMWILSON || optr->type == WILSON || optr->type == CLOVER) {
     g_mu = optr->mu;
     g_c_sw = optr->c_sw;
@@ -298,61 +299,22 @@ void op_invert(const int op_id, const int index_start, const int write_prop) {
         printf("#\n# 2 kappa mu = %e, kappa = %e, c_sw = %e\n", g_mu, g_kappa, g_c_sw);
       }
 
-      //going to change the logic here to use invert_eo for both TMWILSON and CLOVER (no need for invert_clover_eo)
-      //------------------------------------------------------------------------------------------------------------
+      if(optr->type != CLOVER){
+        if(use_preconditioning){
+	  g_precWS=(void*)optr->precWS;}
+	else{
+	     g_precWS=NULL;}
+      }
 
-//      if(optr->type != CLOVER) {
-//	if(use_preconditioning){
-//	  g_precWS=(void*)optr->precWS;
-//	}
-//	else {
-//	  g_precWS=NULL;
-//	}
-//	
-//	//optr->iterations = invert_eo( optr->prop0, optr->prop1, optr->sr0, optr->sr1,
-//	//			      optr->eps_sq, optr->maxiter,
-//	//			      optr->solver, optr->rel_prec,
-//	//			      0, optr->even_odd_flag,optr->no_extra_masses, optr->extra_masses, optr->id );
-//	optr->iterations = invert_eo(optr);
-//	
-//	/* check result */
-//	M_full(g_spinor_field[DUM_DERI], g_spinor_field[DUM_DERI+1], optr->prop0, optr->prop1);
-//      }
-//      else {
-//	/* this must be EE here!   */
-//	/* to match clover_inv in Qsw_psi */
-//	sw_invert(EE, optr->mu);
-//
-//	optr->iterations = invert_clover_eo(optr->prop0, optr->prop1, optr->sr0, optr->sr1,
-//					    optr->eps_sq, optr->maxiter,
-//					    optr->solver, optr->rel_prec,
-//					    &g_gauge_field, &Qsw_pm_psi, &Qsw_minus_psi);
-//	/* check result */
-// 	Msw_full(g_spinor_field[DUM_DERI], g_spinor_field[DUM_DERI+1], optr->prop0, optr->prop1);
-//      }
+      if(optr->type == CLOVER)
+         sw_invert(EE,optr->mu);
 
-        if(optr->type == WILSON || optr->type == TMWILSON || optr->type == CLOVER){
-
-          if(optr->type != CLOVER){
-             if(use_preconditioning){
-	         g_precWS=(void*)optr->precWS;
-	     }
-	     else {
-	         g_precWS=NULL;
-	     }
-          }
-
-          if(optr->type == CLOVER)
-            sw_invert(EE,optr->mu);
-
-          //do the inversion
-          optr->iterations = invert_eo(optr);
+      //do the inversion
+      optr->iterations = invert_eo(optr);
           
   
-	  /* check result */
- 	  optr->applyM(g_spinor_field[DUM_DERI], g_spinor_field[DUM_DERI+1], optr->prop0, optr->prop1);
-
-        }
+      /* check result */
+      optr->applyM(g_spinor_field[DUM_DERI], g_spinor_field[DUM_DERI+1], optr->prop0, optr->prop1);
 
       diff(g_spinor_field[DUM_DERI], g_spinor_field[DUM_DERI], optr->sr0, VOLUME / 2);
       diff(g_spinor_field[DUM_DERI+1], g_spinor_field[DUM_DERI+1], optr->sr1, VOLUME / 2);
@@ -373,8 +335,8 @@ void op_invert(const int op_id, const int index_start, const int write_prop) {
         optr->mu = -optr->mu;
       } else 
         break;
-    }
-  }
+    } //for(i=0; i<2; i++)
+  } //if(optr->type== TMWILSON ||.....)
   else if(optr->type == DBTMWILSON || optr->type == DBCLOVER) {
     g_mubar = optr->mubar;
     g_epsbar = optr->epsbar;

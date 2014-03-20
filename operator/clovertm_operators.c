@@ -56,7 +56,7 @@ su3 *** sw_inv;
 
 
 void assign_mul_one_sw_pm_imu_site_lexic(const int ix,
-            spinor * const k, const spinor * const l, const double mu) {
+            spinor * const k, spinor * const l, const double mu) {
 
   su3_vector ALIGN chi, psi1, psi2;
   const su3 *w1, *w2, *w3;
@@ -872,7 +872,7 @@ void clover_gamma5_nd(const int ieo,
 
 
 void assign_mul_one_sw_pm_imu(const int ieo, 
-			      spinor * const k, const spinor * const l,
+			      spinor * const k, spinor * const l,
 			      const double mu) {
 #ifdef OMP
 #pragma omp parallel
@@ -944,7 +944,7 @@ void assign_mul_one_sw_pm_imu(const int ieo,
 }
 
 
-void assign_mul_one_sw_pm_imu_N(spinor * const k, const spinor * const l, const int N) {
+void assign_mul_one_sw_pm_imu_N(spinor * const k, spinor * const l, const int N) {
 
 //uses g_mu
 #ifdef OMP
@@ -1166,7 +1166,7 @@ void mul_one_sw_pm_imu_sub_mul(spinor * const k, spinor * const l, spinor * cons
  * A. Abdel-Rehim
  **************************************************/
 
-void Mee_sw_psi(spinor * const k, const spinor * const l, const double mu) {
+void Mee_sw_psi(spinor * const k, spinor * const l, const double mu) {
 #ifdef OMP
 #pragma omp parallel
   {
@@ -1372,7 +1372,7 @@ void assign_mul_one_sw_pm_imu_eps(const int ieo,
 
 
 void assign_mul_one_sw_pm_imu_inv(const int ieo, 
-				  spinor * const k, const spinor * const l,
+				  spinor * const k, spinor * const l,
 				  const double mu) {
 #ifdef OMP
 #pragma omp parallel
@@ -1429,7 +1429,7 @@ void assign_mul_one_sw_pm_imu_inv(const int ieo,
  * and store the result in k.
  * A. Abdel-Rehim
  ******************************************************************/
-void assign_mul_one_sw_pm_imu_inv_N(spinor * const k, const spinor * const l,
+void assign_mul_one_sw_pm_imu_inv_N(spinor * const k, spinor * const l,
 				  const int N) {
 
 //uses g_mu
@@ -1555,7 +1555,7 @@ void mul_one_sw_pm_imu_inv(spinor * const k, const double _sign,
 
 
 
-void Mee_sw_inv_psi(spinor * const k, const spinor * const l, const double mu) {
+void Mee_sw_inv_psi(spinor * const k, spinor * const l, const double mu) {
 #ifdef OMP
 #pragma omp parallel
   {
