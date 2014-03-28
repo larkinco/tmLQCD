@@ -279,6 +279,8 @@ void op_invert(const int op_id, const int index_start, const int write_prop) {
   g_kappa = optr->kappa;
   boundary(g_kappa);
 
+  if(optr->type == CLOVER)
+     sw_invert(EE,optr->mu);
   atime = gettime();
   //------------------------------
   if(optr->type == TMWILSON || optr->type == WILSON || optr->type == CLOVER) {
@@ -305,9 +307,6 @@ void op_invert(const int op_id, const int index_start, const int write_prop) {
 	else{
 	     g_precWS=NULL;}
       }
-
-      if(optr->type == CLOVER)
-         sw_invert(EE,optr->mu);
 
       //do the inversion
       optr->iterations = invert_eo(optr);
