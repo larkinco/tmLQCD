@@ -242,7 +242,7 @@ int main(int argc,char *argv[])
     fprintf(stderr, "Checking of geometry failed. Unable to proceed.\nAborting....\n");
     exit(1);
   }
-#if (defined MPI && !(defined _USE_SHMEM))
+#if (defined MPI && !(defined _USE_SHMEM) && !(defined _USE_HALFSPINOR))
   check_xchange(); 
 #endif
 
@@ -256,13 +256,13 @@ int main(int argc,char *argv[])
 
   if(even_odd_flag) {
     /*initialize the pseudo-fermion fields*/
-    j_max=2048;
+    j_max=4096;
     sdt=0.;
     for (k = 0; k < k_max; k++) {
       random_spinor_field_eo(g_spinor_field[k], reproduce_randomnumber_flag, RN_GAUSS);
     }
     
-    while(sdt < 30.) {
+    while(sdt < 10.) {
 #ifdef MPI
       MPI_Barrier(MPI_COMM_WORLD);
 #endif

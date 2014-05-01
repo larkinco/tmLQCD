@@ -29,6 +29,7 @@
 #include "global.h"
 #include "su3.h"
 #include "init_dirac_halfspinor.h"
+#include "fatal_error.h"
 
 #ifdef BGQ
 #  define SPI_ALIGN_BASE 0x7f
@@ -51,10 +52,27 @@ halfspinor32 *** NBPointer32;
 halfspinor32 * sendBuffer32, * recvBuffer32;
 halfspinor32 * sendBuffer32_, * recvBuffer32_;
 
+// body and surface volume
+int bodyV, surfaceV;
 
 int init_dirac_halfspinor() {
-  int j=0, k;
+  int j=0;
   int x, y, z, t;
+#ifdef MPI
+  int k;
+#endif
+#ifdef PARALLELXYZT
+  bodyV = (T-2)*(LZ-2)*(LY-2)*(LX-2)/2;
+#elif defined PARALLELXYT
+  bodyV = (T-2)*(LZ)*(LY-2)*(LX-2)/2;
+#elif defined PARALLELXT
+  bodyV = (T-2)*(LZ)*(LY)*(LX-2)/2;
+#elif defined PARALLELT
+  bodyV = (T-2)*(LZ)*(LY)*(LX)/2;
+#else
+  bodyV = VOLUME/2;
+#endif
+  surfaceV = VOLUME/2-bodyV;
 
   NBPointer = (halfspinor***) calloc(4,sizeof(halfspinor**));
   NBPointer_ = (halfspinor**) calloc(16,(VOLUME+RAND)*sizeof(halfspinor*));
@@ -264,7 +282,7 @@ int init_dirac_halfspinor() {
 			 );
   if(rc != 0) {
     fprintf(stderr, "msg_InjFifoInit failed with rc=%d\n",rc);
-    exit(1);
+    fatal_error("msg_InjFifoInit failed","init_dirac_halfspinor");
   }
 
   // Set up base address table for reception counter and buffer
@@ -290,7 +308,7 @@ int init_dirac_halfspinor() {
   rc = MUSPI_GIBarrierInit ( &GIBarrier, 0 /*comm world class route */);
   if(rc) {
     printf("MUSPI_GIBarrierInit returned rc = %d\n", rc);
-    exit(__LINE__);
+    fatal_error("MUSPI_GIBarrierInit failed","init_dirac_halfspinor");
   }
   // reset the recv counter 
   recvCounter = totalMessageSize;
@@ -516,7 +534,7 @@ int init_dirac_halfspinor32() {
   int rc = MUSPI_GIBarrierInit ( &GIBarrier, 0 /*comm world class route */);
   if(rc) {
     printf("MUSPI_GIBarrierInit returned rc = %d\n", rc);
-    exit(__LINE__);
+    fatal_error("MUSPI_GIBarrierInit failed","init_dirac_halfspinor");
   }
   // reset the recv counter 
   recvCounter = totalMessageSize/2;
