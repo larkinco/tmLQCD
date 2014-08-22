@@ -75,6 +75,7 @@ typedef struct {
 #include"solver/gcr.h"
 #include"solver/incr_eigcg.h"
 #include"solver/eigenvalues.h"
+#include"solver/eigenvalues_arpack.h"
 #include"solver/cg_mms_tm.h"
 #include"solver/mixed_cg_her.h"
 
