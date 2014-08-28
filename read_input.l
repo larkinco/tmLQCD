@@ -895,6 +895,11 @@ inline void rmQuotes(char *str){
     if(myverbose) printf("  Solver set to INCR-EIG-CG line %d operator %d\n", line_of_file, current_operator);
     BEGIN(name_caller);
   }
+  arpackcg {
+    optr->solver = 16;
+    if(myverbose) printf("  Solver set to ARPACKCG line %d operator %d\n", line_of_file, current_operator);
+    BEGIN(name_caller);
+  }
 
 }
 
