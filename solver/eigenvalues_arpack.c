@@ -3,7 +3,7 @@
  * for a complex matrix A using ARPACK and PARPACK. The matrix
  * is accessed through a matrix-vector multiplication function.
  *
- * author: A.M. Abdel-Rehim
+ * Author: A.M. Abdel-Rehim, 2014
  *
  * For reference see the driver programs zndrv1 and in the EXAMPLES 
  * subdriectories of ARPACK and PARPACK.
@@ -54,35 +54,16 @@ static void _FT(pzneupd) (int *comm, int *comp_evecs,char *cA, int *select, _Com
 
 
 
-void evals_arpack(int is_eo, int nev, int ncv, char *which, _Complex double *evals, spinor *v, double tol, int maxiter, matrix_mult av)
+void evals_arpack(int n, int nev, int ncv, char *which, _Complex double *evals, spinor *v, double tol, int maxiter, matrix_mult av, int *info, int *nconv)
 {
+   int N,ldv;
   
-   int n,ldv; //lattice size and leading size dimension (n+buffer) 
-   int N,LDV; //matrix size (as complex double)
-
-   if(is_eo) //even-odd case
-     n = VOLUME/2;
-   else
-     n = VOLUME;
-
-   //in case of halfspinor implementation, communication buffer for the dirac operator 
-   //is needed only for the halfspinor auxilary field, not for the input or output spinor
-   //this should reduce the memory needed to store the eigenvectors signaficantly
-   #ifdef _USE_HALFSPINOR
-   if(is_eo)
-     ldv = VOLUME/2;
-   else
-     ldv = VOLUME;
-   #else
-   if(is_eo)
-     ldv = VOLUMEPLUSRAND/2;
-   else
-     ldv = VOLUMEPLUSRAND;
-   #endif
+   if(n==VOLUME) //full 
+     ldv= VOLUMEPLUSRAND;
+   else          //even-odd
+     ldv= VOLUMEPLUSRAND/2;
    
-   N   = 12*n;       //color and spin
-   LDV = 12*ldv;     //color and spin
-
+   N=12*n;  //size of the matrix as complex double
 
    //check input
    if(nev>=N) nev=N-1;
@@ -90,24 +71,19 @@ void evals_arpack(int is_eo, int nev, int ncv, char *which, _Complex double *eva
 
  
    //parameters for the ARPACK routines--see documentation or source files
-   int ido,lworkl,info,j,ierr,nconv,ishfts,mode;
+   int ido,lworkl,j,ierr,ishfts,mode;
    _Complex double sigma;
-   int comp_evecs=1; //option to compute the eigenvectors
+   int comp_evecs=1; //option to compute the eigenvectors (always set to true here)
    lworkl  = 3*ncv*ncv+5*ncv;   //size of workl array 
    int *iparam = (int *) malloc(11*sizeof(int));
    int *ipntr  = (int *) malloc(14*sizeof(int));
    int *select = (int *) malloc(ncv*sizeof(int));
    spinor *workd;
-   spinor *v0,*v1;
    _Complex double *workev, *resid, *workl; 
    double *rwork,*rd;
    workd  = (spinor *) alloc_aligned_mem(3*ldv*sizeof(spinor));
-   v      = (spinor *) alloc_aligned_mem(ncv*ldv*sizeof(spinor));
-   v0      = (spinor *) alloc_aligned_mem(ldv*sizeof(spinor)); //temp spinors
-   v1      = (spinor *) alloc_aligned_mem(ldv*sizeof(spinor)); //temp spinors
    workev = (_Complex double *) alloc_aligned_mem(3*ncv*sizeof(_Complex double));
-   evals  = (_Complex double *) alloc_aligned_mem(ncv*sizeof(_Complex double));
-   resid  = (_Complex double *) alloc_aligned_mem(12*ldv*sizeof(_Complex double));
+   resid  = (_Complex double *) alloc_aligned_mem(12*n*sizeof(_Complex double));
    workl  = (_Complex double *) alloc_aligned_mem(lworkl*sizeof(_Complex double));
    rwork  = (double *) alloc_aligned_mem(  ncv*sizeof(double));
    rd     = (double *) alloc_aligned_mem(3*ncv*sizeof(double));
@@ -118,9 +94,9 @@ void evals_arpack(int is_eo, int nev, int ncv, char *which, _Complex double *eva
                          */
    char cA='A';
 
-   int parallel,comm;
+   int parallel;
    #ifdef MPI
-   comm=MPI_COMM_WORLD; //communicator used when we call PARPACK
+   MPI_Comm comm=MPI_COMM_WORLD; //communicator used when we call PARPACK
    #endif
 
 
@@ -132,7 +108,7 @@ void evals_arpack(int is_eo, int nev, int ncv, char *which, _Complex double *eva
    
    //set params for arpack
    ido     = 0;                 //reverse communication parameter that intially is set to zero
-   info    = 0;                 //means use a random starting vector with Arnoldi
+   (*info) = 0;                 //means use a random starting vector with Arnoldi
    ishfts  = 1;                 //use exact shifts (other options can be found in the documentation)
    mode    = 1;                 //regular mode
    iparam[0] = ishfts;          
@@ -146,46 +122,40 @@ void evals_arpack(int is_eo, int nev, int ncv, char *which, _Complex double *eva
    {
       #ifndef MPI (serial code)
       _FT(znaupd)(&ido, bmat, &N, which, &nev, &tol, resid, &ncv,
-                  (_Complex double *) v, &LDV, iparam, ipntr, (_Complex double *) workd, 
-                  workl, &lworkl,rwork,&info );
+                  (_Complex double *) v, &N, iparam, ipntr, (_Complex double *) workd, 
+                  workl, &lworkl,rwork,info );
       #else
       _FT(pznaupd)(&comm, &ido, bmat, &N, which, &nev, &tol, resid, &ncv,
-                  (_Complex double *) v, &LDV, iparam, ipntr, (_Complex double *) workd, 
-                  workl, &lworkl,rwork,&info );
+                  (_Complex double *) v, &N, iparam, ipntr, (_Complex double *) workd, 
+                  workl, &lworkl,rwork,info );
       #endif
       if ((ido==-1)||(ido==1)){ 
          av(workd+(ipntr[1]-1)/12, workd+(ipntr[0]-1)/12);
-         //assign(v0,workd+(ipntr[0]-1)/12,n);
-         //av(v1, v0);
-         //assign(workd+(ipntr[1]-1)/12,v1,n);
       }
       
-      //if(g_proc_id == g_stdio_proc)
-        //fprintf(stderr,"ipntr[0]-1 %d ipntr[1]-1 %d \n",ipntr[0]-1,ipntr[1]-1);
-
    } while ((ido==-1)||(ido==1));
    
 /*
  Check for convergence 
 */
-     if ( info < 0 ) 
+     if ( (*info) < 0 ) 
      {
          if(g_proc_id == g_stdio_proc){
-            fprintf(stderr,"Error with _naupd, info = %d\n", info);
+            fprintf(stderr,"Error with _naupd, info = %d\n", *info);
             fprintf(stderr,"Check the documentation of _naupd\n");}
      }
      else 
      { 
         //compute eigenvectors if desired
         #ifndef MPI
-        _FT(zneupd) (&comp_evecs,&cA, select,evals,v,&LDV,&sigma, 
+        _FT(zneupd) (&comp_evecs,&cA, select,evals,v,&N,&sigma, 
                      workev,bmat,&N,which,&nev,&tol,resid,&ncv, 
-                     v,&LDV,iparam,ipntr,workd,workl,&lworkl, 
+                     v,&N,iparam,ipntr,workd,workl,&lworkl, 
                      rwork,&ierr);
         #else
-        _FT(pzneupd) (&comm,&comp_evecs,&cA,select,evals,v,&LDV,&sigma, 
+        _FT(pzneupd) (&comm,&comp_evecs,&cA,select,evals,v,&N,&sigma, 
                       workev,bmat,&N,which,&nev,&tol,resid,&ncv, 
-                      v,&LDV,iparam,ipntr,workd,workl,&lworkl, 
+                      v,&N,iparam,ipntr,workd,workl,&lworkl, 
                       rwork,&ierr);
         #endif
 
@@ -194,7 +164,7 @@ void evals_arpack(int is_eo, int nev, int ncv, char *which, _Complex double *eva
         | Eigenvalues are returned in the one          |
         | dimensional array evals.  The corresponding  |
         | eigenvectors are returned in the first NCONV |
-        | (=IPARAM(5)) columns of the two dimensional  | 
+        | (=IPARAM[4]) columns of the two dimensional  | 
         | array V if requested.  Otherwise, an         |
         | orthogonal basis for the invariant subspace  |
         | corresponding to the eigenvalues in evals is |
@@ -210,8 +180,8 @@ void evals_arpack(int is_eo, int nev, int ncv, char *which, _Complex double *eva
         }
         else //report eiegnvalues and their residuals
         {
-             nconv = iparam[4];
-             for(j=0; j< nconv; j++)
+             (*nconv) = iparam[4];
+             for(j=0; j< (*nconv); j++)
              {
                /*
                %---------------------------%
@@ -229,12 +199,15 @@ void evals_arpack(int is_eo, int nev, int ncv, char *which, _Complex double *eva
                */
                
                //compute the residual
-               av(workd,&v[j*ldv]);
-               assign_diff_mul(workd,&v[j*ldv], evals[j], n);
+               //IMPORTANT: our eigenvectors are of lattice size. In order to apply the Dirac operator
+               //we need to copy them to a spinor with lattice size + buffer size needed for communications
+               assign(workd+ldv,&v[j*n],n);
+               av(workd,workd+ldv);
+               assign_diff_mul(workd,&v[j*n], evals[j], n);
                rd[j*3]   = creal(evals[j]);
                rd[j*3+1] = cimag(evals[j]);
                rd[j*3+2] = sqrt(square_norm(workd,n,parallel));
-               rd[j*3+2] = rd[j*3+2] /sqrt(square_norm(&v[j*ldv],n,parallel));
+               rd[j*3+2] = rd[j*3+2] /sqrt(square_norm(&v[j*n],n,parallel));
 
                if(g_proc_id == g_stdio_proc)
                   fprintf(stdout,"RitzValue %d  %f  %f  ||A*x-lambda*x||/||x||= %f\n",j,rd[j*3],rd[j*3+1],rd[j*3+2]);
@@ -242,7 +215,7 @@ void evals_arpack(int is_eo, int nev, int ncv, char *which, _Complex double *eva
         }
 
         /*Print additional convergence information.*/
-        if( info==1)
+        if( (*info)==1)
         {
            if(g_proc_id == g_stdio_proc)
              fprintf(stderr,"Maximum number of iterations reached.\n");
@@ -252,7 +225,7 @@ void evals_arpack(int is_eo, int nev, int ncv, char *which, _Complex double *eva
            
            if(g_proc_id == g_stdio_proc)
            {
-              if(info==3)
+              if((*info)==3)
               {  
                  fprintf(stderr,"No shifts could be applied during implicit\n");
                  fprintf(stderr,"Arnoldi update, try increasing NCV.\n");
@@ -260,12 +233,11 @@ void evals_arpack(int is_eo, int nev, int ncv, char *which, _Complex double *eva
          
               fprintf(stderr,"_NDRV1\n");
               fprintf(stderr,"=======\n");
-              fprintf(stderr,"Size of the matrix is %d\n", N);
-              fprintf(stderr,"Leading dimension used is%d\n", LDV);
+              fprintf(stderr,"Size of the matrix is %d\n", 12*n);
               fprintf(stderr,"The number of Ritz values requested is %d\n", nev);
               fprintf(stderr,"The number of Arnoldi vectors generated is %d\n", ncv);
               fprintf(stderr,"What portion of the spectrum: %s\n", which);
-              fprintf(stderr,"The number of converged Ritz values is %d\n", nconv); 
+              fprintf(stderr,"The number of converged Ritz values is %d\n", (*nconv) ); 
               fprintf(stderr,"The number of Implicit Arnoldi update iterations taken is %d\n", iparam[2]);
               fprintf(stderr,"The number of OP*x is %d\n", iparam[8]);
               fprintf(stderr,"The convergence criterion is %f\n", tol);

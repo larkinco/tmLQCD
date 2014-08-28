@@ -49,6 +49,22 @@ typedef struct {
                              Example, to solve the linear systems to squared residual 1e-16, one chooses eigcg_restolsq=1e-8 or smaller 
                              This will specify how many times deflated CG restaretd in the second phase (after eigenvectors has been computed)*/
   int eigcg_rand_guess_opt; /*set to 0 to use 0 initial guesses or non-zero values if you want to use random initial guess as a volume source */
+
+
+  /**********************************
+   * arpack_cg parameters
+   **********************************/
+
+   int    arpackcg_nrhs;          /*Number of right-hand sides to be solved*/ 
+   int    arpackcg_nrhs1;         /*First number of right-hand sides to be solved using tolerance eps_sq1*/ 
+   double arpackcg_eps_sq1;       /*Squared tolerance of convergence of the linear system for systems 1 till nrhs1*/
+   double arpackcg_eps_sq;        /*Squared tolerance of convergence of the linear system for systems nrhs1+1 till nrhs*/
+   double arpackcg_res_eps_sq;    /*Suqared tolerance for restarting cg */
+   int    arpackcg_nev;           /*Number of eigenvectors to be computed by arpack*/
+   int    arpackcg_ncv;           /*Size of the subspace used by arpack with the condition (nev+1) =< ncv =< 2*nev */
+   double arpackcg_eig_tol;       /*Tolerance for computing eigenvalues with arpack */
+   int    arpackcg_eig_maxiter;   /*Maximum number of iterations to be used by arpack*/
+   
 } solver_params_t;
 
 

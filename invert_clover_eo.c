@@ -91,6 +91,14 @@ int invert_clover_eo(spinor * const Even_new, spinor * const Odd_new,
                                     rel_prec, max_iter, solver_params.eigcg_nev, solver_params.eigcg_vmax);
        Qm(Odd_new, Odd_new);
 
+    }else if(solver_flag == ARPACKCG){
+
+       if(g_proc_id == 0) {printf("# Using ARPACK-CG!\n"); fflush(stdout);}
+       iter = arpack_cg(VOLUME/2,solver_params.arpackcg_nrhs,solver_params.arpackcg_nrhs1, Odd_new, g_spinor_field[DUM_DERI],Qsq,
+                        solver_params.arpackcg_eps_sq1,precision,solver_params.arpackcg_res_eps_sq,rel_prec,max_iter,
+                        solver_params.arpackcg_nev,solver_params.arpackcg_ncv,solver_params.arpackcg_eig_tol,solver_params.arpackcg_eig_maxiter);
+       Qm(Odd_new, Odd_new);
+
    }else{
     if(g_proc_id == 0) {printf("# This solver is not available for this operator. Exisiting!\n"); fflush(stdout);}
     return 0;
