@@ -231,16 +231,16 @@ void evals_arpack(int n, int nev, int ncv, char *which, _Complex double *evals, 
                  fprintf(stderr,"Arnoldi update, try increasing NCV.\n");
               }
          
-              fprintf(stderr,"_NDRV1\n");
-              fprintf(stderr,"=======\n");
-              fprintf(stderr,"Size of the matrix is %d\n", 12*n);
-              fprintf(stderr,"The number of Ritz values requested is %d\n", nev);
-              fprintf(stderr,"The number of Arnoldi vectors generated is %d\n", ncv);
-              fprintf(stderr,"What portion of the spectrum: %s\n", which);
-              fprintf(stderr,"The number of converged Ritz values is %d\n", (*nconv) ); 
-              fprintf(stderr,"The number of Implicit Arnoldi update iterations taken is %d\n", iparam[2]);
-              fprintf(stderr,"The number of OP*x is %d\n", iparam[8]);
-              fprintf(stderr,"The convergence criterion is %f\n", tol);
+              fprintf(stdout,"_NDRV1\n");
+              fprintf(stdout,"=======\n");
+              fprintf(stdout,"Size of the matrix is %d\n", 12*n);
+              fprintf(stdout,"The number of Ritz values requested is %d\n", nev);
+              fprintf(stdout,"The number of Arnoldi vectors generated is %d\n", ncv);
+              fprintf(stdout,"What portion of the spectrum: %s\n", which);
+              fprintf(stdout,"The number of converged Ritz values is %d\n", (*nconv) ); 
+              fprintf(stdout,"The number of Implicit Arnoldi update iterations taken is %d\n", iparam[2]);
+              fprintf(stdout,"The number of OP*x is %d\n", iparam[8]);
+              fprintf(stdout,"The convergence criterion is %f\n", tol);
            }
         }
      }  //if(info < 0) else part
