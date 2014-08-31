@@ -87,20 +87,28 @@ int arpack_cg(
   else
      LDN = VOLUMEPLUSRAND/2;
 
+
+  double et1,et2;  //timers for computing eigenvetors using arpack
   //before solving 
   if(ncurRHS==0){ 
     //call arpack
+    et1=gettime();
     evals = (_Complex double *) alloc_aligned_mem(ncv*sizeof(_Complex double));
     evecs = (spinor *) alloc_aligned_mem(ncv*N*sizeof(spinor));
     evals_arpack(N,nev,ncv,which,evals,evecs,arpack_eig_tol,arpack_eig_maxiter,f,&info_arpack,&nconv_arpack);
+    et2=gettime();
 
     if(info_arpack != 0){ //arpack didn't converge
       if(g_proc_id == g_stdio_proc)
         fprintf(stderr,"WARNING: ARPACK didn't converge. No deflation will be done\n");
     }
-
-    if(info_arpack == 0)
+    
+    if(info_arpack == 0){
       initwork = (_Complex double *) alloc_aligned_mem(nconv_arpack*sizeof(_Complex double));
+      if(g_proc_id == g_stdio_proc)
+        fprintf(stdout,"ARPACK time: %-f\n",et2-et1);
+    }
+      
 
     ax     = (spinor *) alloc_aligned_mem(LDN*sizeof(spinor));
     r      = (spinor *) alloc_aligned_mem(LDN*sizeof(spinor));
