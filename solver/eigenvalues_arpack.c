@@ -96,7 +96,14 @@ void evals_arpack(int n, int nev, int ncv, char *which, _Complex double *evals, 
 
    int parallel;
    #ifdef MPI
-   MPI_Comm comm=MPI_COMM_WORLD; //communicator used when we call PARPACK
+   MPI_Comm comm; //communicator used when we call PARPACK
+   int comm_err = MPI_Comm_dup(MPI_COMM_WORLD,&comm); //duplicate the MPI_COMM_WORLD to create a communicator to be used with arpack
+   if(comm_err != MPI_SUCCESS) { //error when trying to duplicate the communicator
+     if(g_proc_id == g_stdio_proc){
+       fprintf(stderr,"MPI_Comm_dup return with an error. Exciting...\n");
+       return -1;
+     }
+   }
    #endif
 
 
