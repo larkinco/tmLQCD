@@ -17,12 +17,7 @@
 #include "su3.h"
 #include "solver/matrix_mult_typedef.h"
 #include "linalg/fortran.h"
-
-
-void * alloc_aligned_mem(size_t size);
-//allocate a size memory aligned on a number 
-//of bytes=(ALIGN_BASE+1) boundary
-
+#include "memalloc.h"
 
 
 void evals_arpack(int n, int nev, int ncv, char *which, _Complex double *evals, spinor *v, double tol, int maxiter, matrix_mult av, int *info, int *nconv);
