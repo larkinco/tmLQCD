@@ -128,7 +128,7 @@ void cheb_poly_precon_op(spinor * const R, spinor * const S, matrix_mult f, cons
 
    if(initop==0)
    {
-      v = (spinor *) alloc_ligned_mem(LDN*sizeof(spinor));
+      v = (spinor *) alloc_aligned_mem(LDN*sizeof(spinor));
       initop=1;
    }
 

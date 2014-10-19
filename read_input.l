@@ -626,6 +626,21 @@ inline void rmQuotes(char *str){
     (optr->solver_params).arpackcg_eig_tol = c;
     if(myverbose) printf("  arpackcg_eig_tol set to %lf line %d operator %d\n", a, line_of_file, current_operator);
   }
+  {SPC}*ChebPolyDegree{EQL}{DIGIT}+ {
+    sscanf(yytext, " %[a-zA-Z] = %d", name, &a);
+    (optr->solver_params).cheb_k = a;
+    if(myverbose) printf("  cheb_k set to %d line %d operator %d\n", a, line_of_file, current_operator);
+  }
+  {SPC}*EVmin_HPD{EQL}{FLT} {
+    sscanf(yytext, " %[a-zA-Z1] = %lf", name, &c);
+    (optr->solver_params).op_evmin = c;
+    if(myverbose) printf("  op_evmin set to %lf line %d operator %d\n", a, line_of_file, current_operator);
+  }
+  {SPC}*EVmax_HPD{EQL}{FLT} {
+    sscanf(yytext, " %[a-zA-Z1] = %lf", name, &c);
+    (optr->solver_params).op_evmax = c;
+    if(myverbose) printf("  op_evmax set to %lf line %d operator %d\n", a, line_of_file, current_operator);
+  }
   {SPC}*ExtraMasses{EQL}{FLTLIST} {
     char * token = NULL;
     optr->no_extra_masses = 0;

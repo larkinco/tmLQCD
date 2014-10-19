@@ -70,9 +70,9 @@ typedef struct {
    *for CG related paprameters
    *************************************/
 
-   int k; //order of the polynomial used is k+1 and the lowest value is k=-1 which correspond to T_0
-   double evmin;  //some estimate of the lowest eigenvalue
-   double evmax;  //some estimate of the largest eigenvalue
+   int cheb_k; //order of the polynomial used is k+1 and the lowest value is k=-1 which correspond to T_0
+   double op_evmin;  //some estimate of the lowest eigenvalue
+   double op_evmax;  //some estimate of the largest eigenvalue
    
    
 } solver_params_t;
