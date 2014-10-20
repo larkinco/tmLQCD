@@ -76,6 +76,7 @@ typedef struct {
 #include"solver/mr.h"
 #include"solver/gcr.h"
 #include"solver/incr_eigcg.h"
+#include"solver/arpack_cg.h"
 #include"solver/eigenvalues.h"
 #include"solver/eigenvalues_arpack.h"
 #include"solver/cg_mms_tm.h"

@@ -631,12 +631,12 @@ inline void rmQuotes(char *str){
     (optr->solver_params).cheb_k = a;
     if(myverbose) printf("  cheb_k set to %d line %d operator %d\n", a, line_of_file, current_operator);
   }
-  {SPC}*EVmin_HPD{EQL}{FLT} {
+  {SPC}*EVminHPD{EQL}{FLT} {
     sscanf(yytext, " %[a-zA-Z1] = %lf", name, &c);
     (optr->solver_params).op_evmin = c;
     if(myverbose) printf("  op_evmin set to %lf line %d operator %d\n", a, line_of_file, current_operator);
   }
-  {SPC}*EVmax_HPD{EQL}{FLT} {
+  {SPC}*EVmaxHPD{EQL}{FLT} {
     sscanf(yytext, " %[a-zA-Z1] = %lf", name, &c);
     (optr->solver_params).op_evmax = c;
     if(myverbose) printf("  op_evmax set to %lf line %d operator %d\n", a, line_of_file, current_operator);
@@ -900,6 +900,11 @@ inline void rmQuotes(char *str){
     if(myverbose) printf("  Solver set to ARPACKCG line %d operator %d\n", line_of_file, current_operator);
     BEGIN(name_caller);
   }
+  arpackpolycg {
+    optr->solver = 17;
+    if(myverbose) printf("  Solver set to ARPACKPOLYCG line %d operator %d\n", line_of_file, current_operator);
+    BEGIN(name_caller);
+  }
 
 }
 
@@ -913,6 +918,11 @@ inline void rmQuotes(char *str){
   arpackcg {
     optr->solver = 16;
     if(myverbose) printf("  Solver set to ARPACKCG line %d operator %d\n", line_of_file, current_operator);
+    BEGIN(name_caller);
+  }
+  arpackpolycg {
+    optr->solver = 17;
+    if(myverbose) printf("  Solver set to ARPACKPOLYCG line %d operator %d\n", line_of_file, current_operator);
     BEGIN(name_caller);
   }
 
