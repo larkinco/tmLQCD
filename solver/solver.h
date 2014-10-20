@@ -37,6 +37,7 @@
 #define CGMMSND 14
 #define INCREIGCG 15
 #define ARPACKCG 16
+#define ARPACKPOLYCG 17
 
 #include"solver/matrix_mult_typedef.h"
 #include "solver/matrix_mult_typedef_bi.h"

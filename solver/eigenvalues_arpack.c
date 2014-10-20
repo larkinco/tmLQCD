@@ -255,8 +255,10 @@ void evals_arpack(int n, int nev, int ncv, char *which, _Complex double *evals, 
      return;
 }
 
+
+
 void evals_arpack_poly_hermitian(int n, int nev, int ncv, char *which, _Complex double *evals, spinor *v, double tol, int maxiter, 
-                                 matrix_mult av, int cheb_k, double evmin, double evmax, int *info, int *nconv)
+                                 matrix_mult av, double evmin, double evmax, int cheb_k, int *info, int *nconv)
 {
    int N,ldv;
   
