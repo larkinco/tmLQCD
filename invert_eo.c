@@ -191,7 +191,7 @@ int invert_eo(spinor * const Even_new, spinor * const Odd_new,
     else if(solver_flag == ARPACKPOLYCG) {
        /* Here we invert the hermitean operator squared */
        gamma5(g_spinor_field[DUM_DERI], g_spinor_field[DUM_DERI], VOLUME/2);  
-       if(g_proc_id == 0) {printf("# Using ARPACKPOLYCG!\n"); fflush(stdout);}
+       if(g_proc_id == 0) {printf("# Using ARPACK_POLY_CG!\n"); fflush(stdout);}
        iter = arpack_poly_cg(VOLUME/2,solver_params.arpackcg_nrhs,solver_params.arpackcg_nrhs1, Odd_new, g_spinor_field[DUM_DERI],&Qtm_pm_psi,
                         solver_params.op_evmin,solver_params.op_evmax,solver_params.cheb_k,
                         solver_params.arpackcg_eps_sq1,precision,solver_params.arpackcg_res_eps_sq,rel_prec,max_iter,
