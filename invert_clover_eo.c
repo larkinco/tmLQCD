@@ -83,6 +83,14 @@ int invert_clover_eo(spinor * const Even_new, spinor * const Odd_new,
 		 precision, rel_prec, 
 		 VOLUME/2, Qsq);
     Qm(Odd_new, Odd_new);
+  }
+  else if(solver_flag == POLYPRECONCGHER){
+    if(g_proc_id == 0) {printf("# Using POLY_PRECON_CG_HER!\n"); fflush(stdout);}
+    iter = poly_precon_cg_her(Odd_new, g_spinor_field[DUM_DERI], max_iter, 
+		 precision, rel_prec, 
+		 VOLUME/2, Qsq,
+                  solver_params.op_evmin,solver_params.op_evmax,solver_params.cheb_k);
+    Qm(Odd_new, Odd_new);
     }else if(solver_flag == INCREIGCG){
 
        if(g_proc_id == 0) {printf("# Using Incremental Eig-CG!\n"); fflush(stdout);}

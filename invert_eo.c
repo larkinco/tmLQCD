@@ -45,6 +45,7 @@
 #include"read_input.h"
 #include"xchange/xchange.h"
 #include"solver/poly_precon.h"
+#include"solver/poly_precon_cg_her.h"
 #include"solver/dfl_projector.h"
 #include"invert_eo.h"
 #include "solver/dirac_operator_eigenvectors.h"
@@ -168,6 +169,14 @@ int invert_eo(spinor * const Even_new, spinor * const Odd_new,
       gamma5(g_spinor_field[DUM_DERI], g_spinor_field[DUM_DERI], VOLUME/2);  
       if(g_proc_id == 0) {printf("# Using PCG!\n"); fflush(stdout);}
       iter = pcg_her(Odd_new, g_spinor_field[DUM_DERI], max_iter, precision, rel_prec, VOLUME/2, &Qtm_pm_psi);
+      Qtm_minus_psi(Odd_new, Odd_new);
+    }
+    else if(solver_flag == POLYPRECONCGHER) {
+      /* Here we invert the hermitean operator squared */
+      gamma5(g_spinor_field[DUM_DERI], g_spinor_field[DUM_DERI], VOLUME/2);  
+      if(g_proc_id == 0) {printf("# Using POLY_PRECON_CG_HER!\n"); fflush(stdout);}
+      iter = poly_precon_cg_her(Odd_new, g_spinor_field[DUM_DERI], max_iter, precision, rel_prec, VOLUME/2, &Qtm_pm_psi, 
+                                solver_params.op_evmin,solver_params.op_evmax,solver_params.cheb_k);
       Qtm_minus_psi(Odd_new, Odd_new);
     }
     else if(solver_flag == INCREIGCG) {
