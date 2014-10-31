@@ -61,7 +61,7 @@ evmax: maximum value of the interval
 k: order of the Chebeychev polynomial
 */
 
-void cheb_poly_roots(double *roots, const int k, const double evmin, const double evmax);
+void cheb_poly_roots(_Complex double *roots, const int k, const double evmin, const double evmax);
 /*
 Computes the roots of chebchev polynomial T_k(Q) in the interval [evmin,evmax] and return them in roots
 array of dimension k. The roots and the polynomials are defined as above.
@@ -92,6 +92,9 @@ So, as a polynomial of Q, we have
 and the roots of this polynomial are 
 
     q_i = (evmax+evmin)/2+ (evmax-evmin)/2*cos(pi/2 *(2*i-1)/j)   for i=1,2,..,j and j>=1 
+
+
+Although the roots are real, it will be stored in complex variable
 
 */
 

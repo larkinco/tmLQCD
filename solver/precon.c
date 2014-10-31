@@ -124,7 +124,7 @@ k: order of the Chebeychev polynomial
 }
 
 
-void cheb_poly_roots(double *roots, const int k, const double evmin, const double evmax)
+void cheb_poly_roots(_Complex double *roots, const int k, const double evmin, const double evmax)
 /*
 Computes the roots of chebchev polynomial T_k(Q) in the interval [evmin,evmax] and return them in roots
 array of dimension k. The roots and the polynomials are defined as above.
