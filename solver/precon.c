@@ -122,26 +122,3 @@ k: order of the Chebeychev polynomial
     return;
 
 }
-
-
-void cheb_poly_precon_op(spinor * const R, spinor * const S, matrix_mult f, const int N, const double evmin, const double evmax, const int k)
-{
-
-   static int initop=0;
-   static spinor *v;
-   int LDN;
-   if(N==VOLUME)
-       LDN = VOLUMEPLUSRAND;
-    else
-       LDN = VOLUMEPLUSRAND/2;
-
-   if(initop==0)
-   {
-      v = (spinor *) alloc_aligned_mem(LDN*sizeof(spinor));
-      initop=1;
-   }
-
-   f(v,S);
-   cheb_poly_precon(R,v,f,N,evmin,evmax,k);
-   return;
-}
