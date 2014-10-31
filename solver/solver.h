@@ -39,6 +39,7 @@
 #define ARPACKCG 16
 #define ARPACKPOLYCG 17
 #define POLYPRECONCGHER 18
+#define ARPACKPOLYCGSHIFTS 19
 
 #include"solver/matrix_mult_typedef.h"
 #include "solver/matrix_mult_typedef_bi.h"

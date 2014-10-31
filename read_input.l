@@ -910,6 +910,11 @@ inline void rmQuotes(char *str){
     if(myverbose) printf("  Solver set to POLYPRECONCGHER line %d operator %d\n", line_of_file, current_operator);
     BEGIN(name_caller);
   }
+  polypreconcgshifts {
+    optr->solver = 19;
+    if(myverbose) printf("  Solver set to POLYPRECONCGSHIFTS line %d operator %d\n", line_of_file, current_operator);
+    BEGIN(name_caller);
+  }
 
 }
 
@@ -933,6 +938,11 @@ inline void rmQuotes(char *str){
   polypreconcgher {
     optr->solver = 18;
     if(myverbose) printf("  Solver set to POLYPRECONCGHER line %d operator %d\n", line_of_file, current_operator);
+    BEGIN(name_caller);
+  }
+  polypreconcgshifts {
+    optr->solver = 19;
+    if(myverbose) printf("  Solver set to POLYPRECONCGSHIFTS line %d operator %d\n", line_of_file, current_operator);
     BEGIN(name_caller);
   }
 
