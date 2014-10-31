@@ -282,10 +282,11 @@ void evals_arpack_poly_hermitian(int n, int nev, int ncv, char *which, _Complex 
    int *iparam = (int *) malloc(11*sizeof(int));
    int *ipntr  = (int *) malloc(14*sizeof(int));
    int *select = (int *) malloc(ncv*sizeof(int));
-   spinor *workd;
+   spinor *workd,*tmpv;
    _Complex double *workev, *resid, *workl; 
    double *rwork,*rd;
    workd  = (spinor *) alloc_aligned_mem(3*ldv*sizeof(spinor));
+   tmpv   = (spinor *) alloc_aligned_mem(ldv*sizeof(spinor));
    workev = (_Complex double *) alloc_aligned_mem(3*ncv*sizeof(_Complex double));
    resid  = (_Complex double *) alloc_aligned_mem(12*n*sizeof(_Complex double));
    workl  = (_Complex double *) alloc_aligned_mem(lworkl*sizeof(_Complex double));
@@ -341,8 +342,8 @@ void evals_arpack_poly_hermitian(int n, int nev, int ncv, char *which, _Complex 
                   workl, &lworkl,rwork,info );
       #endif
       if ((ido==-1)||(ido==1)){ 
-         //av(workd+(ipntr[1]-1)/12, workd+(ipntr[0]-1)/12);
-         cheb_poly_precon_op(workd+(ipntr[1]-1)/12, workd+(ipntr[0]-1)/12,av,n,evmin,evmax,cheb_k);
+         av(tmpv, workd+(ipntr[0]-1)/12);
+         cheb_poly_precon(workd+(ipntr[1]-1)/12, tmpv,av,n,evmin,evmax,cheb_k);
       }
       
    } while ((ido==-1)||(ido==1));
@@ -414,8 +415,8 @@ void evals_arpack_poly_hermitian(int n, int nev, int ncv, char *which, _Complex 
                //IMPORTANT: our eigenvectors are of lattice size. In order to apply the Dirac operator
                //we need to copy them to a spinor with lattice size + buffer size needed for communications
                assign(workd+ldv,&v[j*n],n);
-               //av(workd,workd+ldv);
-               cheb_poly_precon_op(workd,workd+ldv,av,n,evmin,evmax,cheb_k);
+               av(tmpv,workd+ldv);
+               cheb_poly_precon(workd,tmpv,av,n,evmin,evmax,cheb_k);
                assign_diff_mul(workd,&v[j*n], evals[j], n);
                rd[j*3]   = creal(evals[j]);
                rd[j*3+1] = cimag(evals[j]);

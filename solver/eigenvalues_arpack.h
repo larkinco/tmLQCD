@@ -67,9 +67,9 @@ void evals_arpack_poly_hermitian(int n, int nev, int ncv, char *which, _Complex 
   maxiter: maximum number of restarts (iterations) allowed to be used by ARPACK
   av     : operator for computing the action of the matrix on the vector
            av(vout,vin) where vout is output spinor and vin is input spinors.
-  cheb_k : the degree of the chebychev polynomial is che_k+1
-  evmin  : some estimate of the smallest eigenvalue of the Hermitian Positive Definite operator
-  evmax  : some estimate of the largest eigenvalue of the Hermitian Positive Definite operator
+  cheb_k : the degree of the chebychev polynomial.
+  evmin  : smallest eigenvalue of the chebyshev polynomial
+  evmax  : largest eigenvalue of the chebyshev polynomial
   info   : output from arpack. 0 means that it converged to the desired tolerance. 
            otherwise, an error message is printed to stderr 
   nconv  : actual number of converged eigenvectors.
