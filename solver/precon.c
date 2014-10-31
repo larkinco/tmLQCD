@@ -15,99 +15,108 @@ void cheb_poly_precon(spinor * const R, spinor * const S, matrix_mult f, const i
 {
 
 /*
- R = T_{k+1}(Q)*S (k>=-1) where S is input spinor and Q is the operator given by the matrix-vector multipliction where Q*v is given by the
- matrix-vector multiplication opertor f. T_{k+1}(Q) is the chebychev polynomial given by:
+ R = T_{k}(Q)*S (k>=0) where S is input spinor and Q is the operator given by the matrix-vector multipliction where Q*v is given by the
+ matrix-vector multiplication opertor f. T_{k}(Q) is the chebychev polynomial.
   
-       evmin and evmax are minimum and maximum eigenvalues of the operator under consideration (assumed to be Hermitian here)  
+ For -1 =< t =< 1, the Chebyshev polynomials are given by
 
-       theta = (evmax+evmin)/2,   delta=(evmax-evmin)/2
-       sigma_0 =1 ,     sigma_1=theta/delta
-       rho_{-1}=0 ,     rho_0=1/(2*sigma_1)
-       rho_k   = 1/(2*sigma_1 - rho_{k-1})
+       T_0(t) = 1    
+       T_1(t) = t
+       T_j(t) = 2*t*T_{j-1}(t) - T_{j-2}(t) where j=2,3,...
 
-       T_{-1}(t) = 0,    T_0(t)=1,  T_1(t)=1-t/theta
-       
-       T_{k+1}(t) = rho_k*{ 2*(sigma_1-t/delta)*T_k(t) - rho_{k-1}*T_{k-1}) 
+and the roots of T_n(t) in the interval [-1,1] for n>=1 are given by
+
+       t_i = cos(pi/2 *(2*i-1)/j) for i=1,2,..,j   and j>=1
+
+In our case, we choose an interval [evmin,evmax] which will require shifting the polynomial.
+
+So we define t = 2/(evmax-evmin)*x - (evmax+evmin)/(evmax-evmin)
+
+where x here is our matrix Q.
+
+So, as a polynomial of Q, we have 
+    T_0(Q) = 1
+
+    T_1(Q) = 2/(evmax-evmin)*Q - (evmax+evmin)/(evmax-evmin)
+
+    T_j(Q) = 4/(evmax-evmin)*Q*T_{j-1}(Q) - 2*(evmax+evmin)/(evmax-evmin)*T_{j-1}(Q) - T_{j-2}(Q)  
+
+
+and the roots of this polynomial are 
+
+    q_i = (evmax+evmin)/2+ (evmax-evmin)/2*cos(pi/2 *(2*i-1)/j)   for i=1,2,..,j and j>=1 
+
 
 R: output spinor
 S: input spinor
 f: matrix-vector multiplication operator
 N: size of the spinor
-evmin: minimum value of the interval (approximate lowest eigenvalue)
-evmax: maximum value of the interval (approximate largest eigenvalue)
-k: order of the Chebeychev polynomial is k+1
+evmin: minimum value of the interval
+evmax: maximum value of the interval
+k: order of the Chebeychev polynomial
 */
 
-   double theta,delta,sigma1,rho_prev,rho;
    double d1,d2,d3;
    static int initp=0;
-   static spinor *vm1,*tmpv1,*tmpv2;
+   static spinor *tmpv1,*tmpv2,*tmpv3;
 
-   if(k < -1){ //check the order of the requested polynomial
+   if(k < 0){ //check the order of the requested polynomial
       if(g_proc_id == g_stdio_proc)
-        fprintf(stderr,"Error: lowest order of the polynomial is 0 (k=-1).\n");
+        fprintf(stderr,"Error: lowest allowed order of the polynomial is 0.\n");
         exit(1);
-    }
+   }
 
-    //T_0(Q)=1 
-    assign(R,S,N);
-    if(k== -1){
+
+   //T_0(Q)=1 
+   assign(R,S,N);
+   if(k== 0){
       return;
-    }
+   }
 
 
-    theta=0.5*(evmax+evmin);
-    delta=0.5*(evmax-evmin);
+   //T_1(Q) = 2/(evmax-evmin)*Q - (evmax+evmin)/(evmax-evmin)
+   d1 = 2.0/(evmax-evmin);
+   d2 = -(evmax+evmin)/(evmax-evmin);
+   f(R,S); //R=Q(S)
+   assign_mul_add_mul_r(R,S,d1,d2,N);
+   if(k==1){
+     return;
+   }
+   
+   //degree >=2
+   //==========
+   int LDN;
+   if(N==VOLUME)
+      LDN = VOLUMEPLUSRAND;
+   else
+      LDN = VOLUMEPLUSRAND/2;
 
-    if(delta < 5e-15){ //check the size of the interval
-      if(g_proc_id == g_stdio_proc)
-        fprintf(stderr,"Error: evmax-evmin < 5e-15.\n");
-        exit(1);
-    }
-
-    sigma1=theta/delta;
-    rho_prev=0.0;
-
-    int LDN;
-    if(N==VOLUME)
-       LDN = VOLUMEPLUSRAND;
-    else
-       LDN = VOLUMEPLUSRAND/2;
-
-    if(initp==0)
-    {
-       //alloacate memory for needed spinors
-       vm1   = (spinor *) alloc_aligned_mem(LDN*sizeof(spinor));
+   //allocate needed memory
+   if(initp==0)
+   {
        tmpv1 = (spinor *) alloc_aligned_mem(LDN*sizeof(spinor));
        tmpv2 = (spinor *) alloc_aligned_mem(LDN*sizeof(spinor));
-       
+       tmpv3 = (spinor *) alloc_aligned_mem(LDN*sizeof(spinor));
        initp=1;
-    }
+   }
 
 
+   //T_j(Q) = 4/(evmax-evmin)*Q*T_{j-1}(Q) - 2*(evmax+evmin)/(evmax-evmin)*T_{j-1}(Q) - T_{j-2}(Q)  
+   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   d1 = 4.0/(evmax-evmin);
+   d2 = -2.0*(evmax+evmin)/(evmax-evmin);
+   d3 = -1.0;
 
+   
 
-    zero_spinor_field(vm1,N);
-
-    for(int i=0; i <= k; i++)
+    assign(tmpv1,S,N);
+    assign(tmpv2,R,N);
+    for(int i=2; i <= k; i++)
     {
-       //rho_{-1}=0 , rho_0=1/(2*sigma_1)
-       //rho_k   = 1/(2*sigma_1 - rho_{k-1})
-       //T_{i+1}(t) = rho_i*{ 2*(sigma_1-t/delta)*T_i(t) - rho_{i-1}*T_{i-1}) 
-
-       rho=1.0/(2*sigma1-rho_prev);
-
-       d1=  2*rho*sigma1;
-       d2= -2.0*rho/delta;
-       d3= -rho*rho_prev;
-
-       f(tmpv1,R);
+       f(R,tmpv2);
+       assign_mul_add_mul_add_mul_r(R,tmpv2,tmpv1,d1,d2,d3,N);
+       assign(tmpv1,tmpv2,N);
        assign(tmpv2,R,N);
-
-       assign_mul_add_mul_add_mul_r(R,tmpv1,vm1,d1,d2,d3,N);
-       assign(vm1,tmpv2,N);
-
-       rho_prev=rho;
     }
 
     return;
