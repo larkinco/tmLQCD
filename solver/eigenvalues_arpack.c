@@ -490,11 +490,10 @@ void evals_arpack_poly_hermitian_shifts(int n, int nev, int ncv, char *which, _C
    int *iparam = (int *) malloc(11*sizeof(int));
    int *ipntr  = (int *) malloc(14*sizeof(int));
    int *select = (int *) malloc(ncv*sizeof(int));
-   spinor *workd,*tmpv;
+   spinor *workd;
    _Complex double *workev, *resid, *workl; 
    double *rwork,*rd;
    workd  = (spinor *) alloc_aligned_mem(3*ldv*sizeof(spinor));
-   tmpv   = (spinor *) alloc_aligned_mem(ldv*sizeof(spinor));
    workev = (_Complex double *) alloc_aligned_mem(3*ncv*sizeof(_Complex double));
    resid  = (_Complex double *) alloc_aligned_mem(12*n*sizeof(_Complex double));
    workl  = (_Complex double *) alloc_aligned_mem(lworkl*sizeof(_Complex double));
@@ -557,9 +556,8 @@ void evals_arpack_poly_hermitian_shifts(int n, int nev, int ncv, char *which, _C
         cheb_k=iparam[7];
         cheb_poly_roots(cheb_roots,cheb_k,evmin,evmax);
         for(int i=0; i<cheb_k; i++)
-           workl[ipntr[13+i]-1]=cheb_roots[i];
+           workl[ipntr[13]+i-1]=cheb_roots[i];
       }
-      
    } while ((ido==-1)||(ido==1)||(ido==3));
    
 /*

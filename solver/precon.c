@@ -172,7 +172,7 @@ and the roots of this polynomial are
    for(i=1; i<=k; i++)
       roots[i-1] = d1+d2*cos(d3*(i-0.5));
 
-
+   
    return ;
 }
 
