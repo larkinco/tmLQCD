@@ -342,8 +342,8 @@ void evals_arpack_poly_hermitian(int n, int nev, int ncv, char *which, _Complex 
                   workl, &lworkl,rwork,info );
       #endif
       if ((ido==-1)||(ido==1)){ 
-         av(tmpv, workd+(ipntr[0]-1)/12);
-         cheb_poly_precon(workd+(ipntr[1]-1)/12, tmpv,av,n,evmin,evmax,cheb_k);
+         //av(tmpv, workd+(ipntr[0]-1)/12);
+         cheb_poly_precon_residual(workd+(ipntr[1]-1)/12,workd+(ipntr[0]-1)/12 ,av,n,evmin,evmax,cheb_k);
       }
       
    } while ((ido==-1)||(ido==1));
@@ -415,8 +415,8 @@ void evals_arpack_poly_hermitian(int n, int nev, int ncv, char *which, _Complex 
                //IMPORTANT: our eigenvectors are of lattice size. In order to apply the Dirac operator
                //we need to copy them to a spinor with lattice size + buffer size needed for communications
                assign(workd+ldv,&v[j*n],n);
-               av(tmpv,workd+ldv);
-               cheb_poly_precon(workd,tmpv,av,n,evmin,evmax,cheb_k);
+               //av(tmpv,workd+ldv);
+               cheb_poly_precon_residual(workd,workd+ldv,av,n,evmin,evmax,cheb_k);
                assign_diff_mul(workd,&v[j*n], evals[j], n);
                rd[j*3]   = creal(evals[j]);
                rd[j*3+1] = cimag(evals[j]);
