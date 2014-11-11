@@ -70,7 +70,7 @@ int poly_precon_cg_her(spinor * const P, spinor * const Q, const int max_iter,
     diff(solver_field[1], solver_field[3], solver_field[2], N);
   }
   /* z0 = M^-1 r0 */
-  cheb_poly_precon(solver_field[3], solver_field[1],f,N,evmin,evmax,cheb_k);
+  cheb_poly_precon_op(solver_field[3], solver_field[1],f,N,evmin,evmax,cheb_k);
   //invert_eigenvalue_part(solver_field[3], solver_field[1], 10, N);
   /* p0 = z0 */
   assign(solver_field[2], solver_field[3], N);
@@ -103,16 +103,18 @@ int poly_precon_cg_her(spinor * const P, spinor * const Q, const int max_iter,
       finalize_solver(solver_field, nr_sf);
       return(iteration+1);
     }
-#ifdef _USE_HALFSPINOR
-    if(((err*err <= eps_sq) && (rel_prec == 0)) || ((err*err <= eps_sq*squarenorm) && (rel_prec == 1)) || iteration > 1400) {
-      g_sloppy_precision = 1;
-      if(g_debug_level > 2 && g_proc_id == g_stdio_proc) {
-	printf("sloppy precision on\n"); fflush( stdout);
-      }
-    }
-#endif
+//#ifdef _USE_HALFSPINOR
+//    if(((err*err <= eps_sq) && (rel_prec == 0)) || ((err*err <= eps_sq*squarenorm) && (rel_prec == 1)) || iteration > 1400) {
+//     g_sloppy_precision = 1;
+//      if(g_debug_level > 2 && g_proc_id == g_stdio_proc) {
+//	printf("sloppy precision on\n"); fflush( stdout);
+//      }
+//    }
+//#endif
     /* z_j */
     beta_cg = 1/pro2;
+    /* z_(j+1) = M^-1 r_(j+1) */
+    cheb_poly_precon_op(solver_field[3], solver_field[1],f,N,evmin,evmax,cheb_k);
 /*     invert_eigenvalue_part(solver_field[3], solver_field[1], 10, N); */
     /* Compute beta_cg(i+1)
        Compute p_(i+1) = r_i+1 + beta_(i+1) p_i     */
