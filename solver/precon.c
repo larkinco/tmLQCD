@@ -11,61 +11,79 @@
 
 #include "solver/precon.h"
 
-void cheb_poly_precon(spinor * const R, spinor * const S, matrix_mult f, const int N, const double evmin, const double evmax, const int k)
+
+//compute R= T_k(A) S where T_k(A) = C_k(d(A))/C_k(d(0)) and d(A) = 2A/(b-a)-(b+a)/(b-a) where [a,b] are the boundaries of a given interval
+//R: output spinor (out)
+//S: input spinor (in) 
+//f: matrix-vector multiplication function corresponding to the operator A (in)
+//N: size of the spinors      (in)
+//a,b: limits of the interval (in)
+//k: degree of the polynomial requested >=1 (in)
+void cheb_poly_precon_residual(spinor * const R, spinor * const S, matrix_mult f, const int N, const double a, const double b, const int k)
 {
-
 /*
- R = T_{k}(Q)*S (k>=0) where S is input spinor and Q is the operator given by the matrix-vector multipliction where Q*v is given by the
- matrix-vector multiplication opertor f. T_{k}(Q) is the chebychev polynomial.
-  
- For -1 =< t =< 1, the Chebyshev polynomials are given by
+This is the polynomial T_{k}(x) = 1 -xP_{k-1}(x) defined such that |1-xP_{k-1}(x)| is minimized over the interval [a,b]. P_{k-1}(x) is the approximate
+inverse over this interval and T(x) is the residual polynomial. When solving a linear system Ay=b with initial residual r_0=b-Ay_0, we see that the 
+resiudal of the preconditioned system P(A)A y = P(A)b has a residual T(A)r_0. For eigenvalue problems, we can use T_{k}(A) as a filter to minimize
+the contribution coming from eigenvalues in the interval [a,b] and enhance the other part of the spectrum. This will be used with ARPACK for example.
+For the linear system on the other hand we will use P(A) as a preconditioner and it is defined in the function cheb_poly_precon_op. Note that the roots
+of T(x) are related to the roots of the Chebyshev polynomial of the first kind.
 
-       T_0(t) = 1    
-       T_1(t) = t
-       T_j(t) = 2*t*T_{j-1}(t) - T_{j-2}(t) where j=2,3,...
+Propertires of the Chebyshev polynomials of the first kind C_k(x) for x in the interval [-1,1] and k=0,1,2,3,...
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-and the roots of T_n(t) in the interval [-1,1] for n>=1 are given by
+k=0: C_0(x) =1
+k=1: C_1(x) = x
+...
+three-term recurrence:   C_{k+1}(x) = 2xC_k(x) - C_{k-1}
 
-       t_i = cos(pi/2 *(2*i-1)/j) for i=1,2,..,j   and j>=1
+C_k(x) has k simple roots in the interval [-1,1] given by
+x_l = cos(pi/2 (2l-1)/k) for k=1,2,3,... and l=1,2,..,k
 
-In our case, we choose an interval [evmin,evmax] which will require shifting the polynomial.
+In the interval [a,b] we can define a shifted polynomial by C_k(d(x) where d(x) = 2x/(b-a) - (b+a)/(b-a)
+such that d(a)=-1, and d(b)=+1. 
 
-So we define t = 2/(evmax-evmin)*x - (evmax+evmin)/(evmax-evmin)
+d(x) = x/delta - theta/delta  with delta = (b-a)/2 and theta=(b+a)/2
 
-where x here is our matrix Q.
+R_k(x) = C_k(d(x) is the shifted Chebyshev polynomial with 
 
-So, as a polynomial of Q, we have 
-    T_0(Q) = 1
+R_0(x) =1
+R_1(x) = d(x)
 
-    T_1(Q) = 2/(evmax-evmin)*Q - (evmax+evmin)/(evmax-evmin)
+R_{k+1}(x) = 2d(x)R_k(x)-R_{k-1}(x)
 
-    T_j(Q) = 4/(evmax-evmin)*Q*T_{j-1}(Q) - 2*(evmax+evmin)/(evmax-evmin)*T_{j-1}(Q) - T_{j-2}(Q)  
+T_k(x) is the normalized shifted Chebyshev polynomial given by:
 
+For k=1,2,3,....   T_k(x) = R_k(x)/sigma_k(x)
 
-and the roots of this polynomial are 
+with sigma_0 = 1, sigma_1=d(0) = - theta/delta
+sigma_{k+1} =  -2theta/delta sigma_k - sigma_{k-1}
 
-    q_i = (evmax+evmin)/2+ (evmax-evmin)/2*cos(pi/2 *(2*i-1)/j)   for i=1,2,..,j and j>=1 
+These relations define the polynomial T_k(x)
 
+The roots of T_k(x) are the same as the roots of C_k(d(x)) and are given by
 
-R: output spinor
-S: input spinor
-f: matrix-vector multiplication operator
-N: size of the spinor
-evmin: minimum value of the interval
-evmax: maximum value of the interval
-k: order of the Chebeychev polynomial
+x_l = (b-a)/2*[cos(pi/2 (2*l-1)/k)+(b+a)/(b-a)]
+
 */
-
-   double d1,d2,d3;
    static int initp=0;
-   static spinor *tmpv1,*tmpv2,*tmpv3;
+   static spinor *v1,*v2,*v3;
+
+   double delta,theta;
+   double sigma,sigma1,sigma2;
+   double d1,d2,d3;
 
    if(k < 0){ //check the order of the requested polynomial
       if(g_proc_id == g_stdio_proc)
-        fprintf(stderr,"Error: lowest allowed order of the polynomial is 0.\n");
+        fprintf(stderr,"Error: lowest allowed order of the residual polynomial is 0.\n");
         exit(1);
    }
 
+   delta = (b-a)/2.0;
+   theta = (b+a)/2.0;
+
+   sigma  = 1.0;
+   sigma1 = -theta/delta;
 
    //T_0(Q)=1 
    assign(R,S,N);
@@ -74,9 +92,9 @@ k: order of the Chebeychev polynomial
    }
 
 
-   //T_1(Q) = 2/(evmax-evmin)*Q - (evmax+evmin)/(evmax-evmin)
-   d1 = 2.0/(evmax-evmin);
-   d2 = -(evmax+evmin)/(evmax-evmin);
+   //T_1(Q) = [2/(b-a)*Q - (b+a)/(b-a)] / sigma_1 = -Q/theta +1 
+   d1 = -1.0/theta;
+   d2 =  1.0;
    f(R,S); //R=Q(S)
    assign_mul_add_mul_r(R,S,d1,d2,N);
    if(k==1){
@@ -85,6 +103,11 @@ k: order of the Chebeychev polynomial
    
    //degree >=2
    //==========
+
+   //T_0 = S
+   //T_1 = R
+
+
    int LDN;
    if(N==VOLUME)
       LDN = VOLUMEPLUSRAND;
@@ -94,76 +117,158 @@ k: order of the Chebeychev polynomial
    //allocate needed memory
    if(initp==0)
    {
-       tmpv1 = (spinor *) alloc_aligned_mem(LDN*sizeof(spinor));
-       tmpv2 = (spinor *) alloc_aligned_mem(LDN*sizeof(spinor));
-       tmpv3 = (spinor *) alloc_aligned_mem(LDN*sizeof(spinor));
+       v1 = (spinor *) alloc_aligned_mem(LDN*sizeof(spinor));
+       v2 = (spinor *) alloc_aligned_mem(LDN*sizeof(spinor));
+       v3 = (spinor *) alloc_aligned_mem(LDN*sizeof(spinor));
        initp=1;
    }
 
 
-   //T_j(Q) = 4/(evmax-evmin)*Q*T_{j-1}(Q) - 2*(evmax+evmin)/(evmax-evmin)*T_{j-1}(Q) - T_{j-2}(Q)  
-   //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-   d1 = 4.0/(evmax-evmin);
-   d2 = -2.0*(evmax+evmin)/(evmax-evmin);
-   d3 = -1.0;
+   // T_j(Q) = 1/(sigma_j*delta) Q - theta/(delta*sigma_j) T_{j-1}(Q) -1/sigma_j T_{j-2}(Q)  for j=2,3,...  
+   //-----------------------------------------------------------------------------------------------------
 
-   
+   assign(v1,S,N);
+   assign(v2,R,N);
 
-    assign(tmpv1,S,N);
-    assign(tmpv2,R,N);
-    for(int i=2; i <= k; i++)
-    {
-       f(R,tmpv2);
-       assign_mul_add_mul_add_mul_r(R,tmpv2,tmpv1,d1,d2,d3,N);
-       assign(tmpv1,tmpv2,N);
-       assign(tmpv2,R,N);
-    }
+   //v1 = T_0,  v2 = T_1
 
-    return;
+
+   for(int i=2; i <= k; i++)
+   {
+      sigma2 = -2.0*theta/delta*sigma1 - sigma;
+      
+      d1 = 1.0/(sigma2*delta);
+      d2 = -theta/(sigma2*delta);
+      d3 = -1.0/sigma2;
+
+      f(R,v2);
+      assign_mul_add_mul_add_mul_r(R,v2,v1,d1,d2,d3,N);
+
+      assign(v1,v2,N);
+      assign(v2,R,N);
+
+      sigma  = sigma1;
+      sigma1 = sigma2;  
+   }
+
+   return;
 
 }
 
 
-void cheb_poly_roots(_Complex double *roots, const int k, const double evmin, const double evmax)
+//This is the version of the preconditioner to be used with linear system solution
+void cheb_poly_precon_op(spinor * const R, spinor * const S, matrix_mult f, const int N, const double a, const double b, const int k)
 /*
-Computes the roots of chebchev polynomial T_k(Q) in the interval [evmin,evmax] and return them in roots
-array of dimension k. The roots and the polynomials are defined as above.
- For -1 =< t =< 1, the Chebyshev polynomials are given by
+Computes the action of the polynomial P_k(x) which minimizes the |1-xP_k(x)| over the interval [a,b]. This polynomial is used as 
+an approximation to the inverse of the matrix over that interval and can be used as a preconditioner for CG. The recurrence relations
+could be derived similar to the residual polynomial above and are given by:
 
-       T_0(t) = 1    
-       T_1(t) = t
-       T_j(t) = 2*t*T_{j-1}(t) - T_{j-2}(t) where j=2,3,...
+sigma_0 = 1, sigma_1=d(0) = - theta/delta
+sigma_{k+1} =  -2theta/delta sigma_k - sigma_{k-1}
 
-and the roots of T_n(t) in the interval [-1,1] for n>=1 are given by
+P_0(Q) = -1/theta
 
-       t_i = cos(pi/2 *(2*i-1)/j) for i=1,2,..,j   and j>=1
+P_1(Q) = - (4*theta+2*Q)/(2*theta^2-delta^2)
 
-In our case, we choose an interval [evmin,evmax] which will require shifting the polynomial.
+P_{k+1}(Q) = -(2*sigma_{k+1}/(delta*sigma_{k+2}))- 2*sigma_{k+1}/(delta*sigma_{k+2})*(theta-Q)*P_k(Q) - sigma_k/sigma_{k+2}*P_{k-1}(Q)
 
-So we define t = 2/(evmax-evmin)*x - (evmax+evmin)/(evmax-evmin)
+*/
+{
+   static int initp=0;
+   static spinor *v1,*v2,*v3,*v4;
 
-where x here is our matrix Q.
+   double delta,theta;
+   double sigma0,sigma1,sigma2,sigma3;
+   double d1,d2,d3,d4;
 
-So, as a polynomial of Q, we have 
-    T_0(Q) = 1
+   if(k < 0){ //check the order of the requested polynomial
+      if(g_proc_id == g_stdio_proc)
+        fprintf(stderr,"Error: lowest allowed order of the residual polynomial is 0.\n");
+        exit(1);
+   }
 
-    T_1(Q) = 2/(evmax-evmin)*Q - (evmax+evmin)/(evmax-evmin)
+   int LDN;
+   if(N==VOLUME)
+      LDN = VOLUMEPLUSRAND;
+   else
+      LDN = VOLUMEPLUSRAND/2;
 
-    T_j(Q) = 4/(evmax-evmin)*Q*T_{j-1}(Q) - 2*(evmax+evmin)/(evmax-evmin)*T_{j-1}(Q) - T_{j-2}(Q)  
+   //allocate needed memory
+   if(initp==0)
+   {
+       v1 = (spinor *) alloc_aligned_mem(LDN*sizeof(spinor));
+       v2 = (spinor *) alloc_aligned_mem(LDN*sizeof(spinor));
+       v3 = (spinor *) alloc_aligned_mem(LDN*sizeof(spinor));
+       v4 = (spinor *) alloc_aligned_mem(LDN*sizeof(spinor));
+       initp=1;
+   }
+
+   delta = (b-a)/2.0;
+   theta = (b+a)/2.0;
+
+   sigma0 =  1.0;
+   sigma1 = -theta/delta;
+   sigma2 = -2.0*theta/delta*sigma1 - sigma0;
+
+   //P_0(Q) = -1/theta;
+   d1 = -1.0/theta;
+   mul_r(v1,d1,S,N);
+   if(k== 0){
+      return;
+   }
 
 
-and the roots of this polynomial are 
+   //P_1(Q) = -(4*theta+2*Q)/(2*theta^2-delta^2) 
+   d1 = -4.0*theta/(2.0*theta*theta-delta*delta);
+   d2 = -2.0/(2*theta*theta-delta*delta);
+   f(R,S); //R=Q(S)
+   assign_mul_add_mul_r(R,S,d1,d2,N);
+   if(k==1){
+     return;
+   }
+   
+   //P_{k+1}(Q) = -(2*sigma_{k+1}/(delta*sigma_{k+2}))- 2*sigma_{k+1}/(delta*sigma_{k+2})*(theta-Q)*P_k(Q) - sigma_k/sigma_{k+2}*P_{k-1}(Q)
+   //--------------------------------------------------------------------------------------------------------------------------------------
+   assign(v2,R,N);
 
-    q_i = (evmax+evmin)/2+ (evmax-evmin)/2*cos(pi/2 *(2*i-1)/j)   for i=1,2,..,j and j>=1 
+   //v1 = P_0,  v2 = P_1
+   for(int i=2; i <= k; i++)
+   {
+      sigma3 = -2.0*theta/delta*sigma2 - sigma1;
+      
+      d1 = +2.0*sigma2/delta/sigma3;
+      d2 = -2.0*sigma2*theta/delta/sigma3;
+      d3 = -d2;
+      d4 = -sigma1/sigma3;
 
+      f(R,v2);
+      assign_mul_add_mul_add_mul_add_mul_r(R,v2,S,v1,d1,d2,d3,d4,N);
+
+      
+      sigma0 = sigma1;
+      sigma1 = sigma2;
+      sigma2 = sigma3;
+
+      assign(v1,v2,N);
+      assign(v2,R,N);  
+   }
+
+   return;
+}
+
+void cheb_poly_roots(_Complex double *roots, const int k, const double a, const double b)
+/*
+roots of the shifted Chebyshev polynomial in the interval [a,b]
+The roots of C_k(d(x)) and are given by
+x_l = (b-a)/2*[cos(pi/2 (2*l-1)/k)+(b+a)/(b-a)]
 */
 {
    double PI=3.141592653589793;
 
    double d1,d2,d3;
 
-   d1=0.5*(evmax+evmin);
-   d2=0.5*(evmax-evmin);
+   d1=0.5*(b+a);
+   d2=0.5*(b-a);
    d3=PI/(double)k;
 
 
