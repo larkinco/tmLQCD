@@ -90,6 +90,8 @@ P_{k+1}(Q) = -(2*sigma_{k+1}/(delta*sigma_{k+2}))- 2*sigma_{k+1}/(delta*sigma_{k
 void cheb_poly_roots(_Complex double *roots, const int k, const double a, const double b);
 /*
 roots of the shifted Chebyshev polynomial in the interval [a,b]
+The roots of C_k(d(x)) and are given by
+x_l = (b-a)/2*[cos(pi/2 (2*l-1)/k)+(b+a)/(b-a)]
 */
 
 

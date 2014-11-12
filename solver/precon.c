@@ -1,7 +1,6 @@
 /*********************************************************************** 
- * preconditioning related functions.
- * Note: there exist already polynomial preconditioning operators
- *       related to the chebychev polynomials in poly_precon.h files
+ * Chebyshev polynomial preconditioning related functions.
+ * Note: there also other related functions in poly_precon.h files
  *       that was developed earlier by Carsten
  *
  * Author: A.M. Abdel-Rehim, 2014
@@ -13,6 +12,7 @@
 
 
 //compute R= T_k(A) S where T_k(A) = C_k(d(A))/C_k(d(0)) and d(A) = 2A/(b-a)-(b+a)/(b-a) where [a,b] are the boundaries of a given interval
+//d(a)=-1, d(b)=1
 //R: output spinor (out)
 //S: input spinor (in) 
 //f: matrix-vector multiplication function corresponding to the operator A (in)
@@ -35,7 +35,7 @@ Propertires of the Chebyshev polynomials of the first kind C_k(x) for x in the i
 k=0: C_0(x) =1
 k=1: C_1(x) = x
 ...
-three-term recurrence:   C_{k+1}(x) = 2xC_k(x) - C_{k-1}
+three-term recurrence:   C_{k+1}(x) = 2xC_k(x) - C_{k-1}(x)
 
 C_k(x) has k simple roots in the interval [-1,1] given by
 x_l = cos(pi/2 (2l-1)/k) for k=1,2,3,... and l=1,2,..,k
@@ -67,10 +67,10 @@ x_l = (b-a)/2*[cos(pi/2 (2*l-1)/k)+(b+a)/(b-a)]
 
 */
    static int initp=0;
-   static spinor *v1,*v2,*v3;
+   static spinor *v1,*v2;
 
    double delta,theta;
-   double sigma,sigma1,sigma2;
+   double sigma,sigma1,sigma_old;
    double d1,d2,d3;
 
    if(k < 0){ //check the order of the requested polynomial
@@ -82,8 +82,7 @@ x_l = (b-a)/2*[cos(pi/2 (2*l-1)/k)+(b+a)/(b-a)]
    delta = (b-a)/2.0;
    theta = (b+a)/2.0;
 
-   sigma  = 1.0;
-   sigma1 = -theta/delta;
+   sigma1 = -delta/theta;
 
    //T_0(Q)=1 
    assign(R,S,N);
@@ -92,8 +91,8 @@ x_l = (b-a)/2*[cos(pi/2 (2*l-1)/k)+(b+a)/(b-a)]
    }
 
 
-   //T_1(Q) = [2/(b-a)*Q - (b+a)/(b-a)] / sigma_1 = -Q/theta +1 
-   d1 = -1.0/theta;
+   //T_1(Q) = [2/(b-a)*Q - (b+a)/(b-a)]*sigma_1 
+   d1 =  sigma1/delta;
    d2 =  1.0;
    f(R,S); //R=Q(S)
    assign_mul_add_mul_r(R,S,d1,d2,N);
@@ -119,27 +118,22 @@ x_l = (b-a)/2*[cos(pi/2 (2*l-1)/k)+(b+a)/(b-a)]
    {
        v1 = (spinor *) alloc_aligned_mem(LDN*sizeof(spinor));
        v2 = (spinor *) alloc_aligned_mem(LDN*sizeof(spinor));
-       v3 = (spinor *) alloc_aligned_mem(LDN*sizeof(spinor));
        initp=1;
    }
 
 
-   // T_j(Q) = 1/(sigma_j*delta) Q - theta/(delta*sigma_j) T_{j-1}(Q) -1/sigma_j T_{j-2}(Q)  for j=2,3,...  
-   //-----------------------------------------------------------------------------------------------------
-
    assign(v1,S,N);
    assign(v2,R,N);
 
-   //v1 = T_0,  v2 = T_1
-
+   sigma_old = sigma1;
 
    for(int i=2; i <= k; i++)
    {
-      sigma2 = -2.0*theta/delta*sigma1 - sigma;
+      sigma = 1.0/(2.0/sigma1-sigma_old);
       
-      d1 = 1.0/(sigma2*delta);
-      d2 = -theta/(sigma2*delta);
-      d3 = -1.0/sigma2;
+      d1 = 2.0*sigma/delta;
+      d2 = -d1*theta;
+      d3 = -sigma*sigma_old;
 
       f(R,v2);
       assign_mul_add_mul_add_mul_r(R,v2,v1,d1,d2,d3,N);
@@ -147,8 +141,7 @@ x_l = (b-a)/2*[cos(pi/2 (2*l-1)/k)+(b+a)/(b-a)]
       assign(v1,v2,N);
       assign(v2,R,N);
 
-      sigma  = sigma1;
-      sigma1 = sigma2;  
+      sigma_old  = sigma;
    }
 
    return;

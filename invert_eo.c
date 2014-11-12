@@ -193,8 +193,8 @@ int invert_eo(spinor * const Even_new, spinor * const Odd_new,
        gamma5(g_spinor_field[DUM_DERI], g_spinor_field[DUM_DERI], VOLUME/2);  
        if(g_proc_id == 0) {printf("# Using ARPACKCG!\n"); fflush(stdout);}
        iter = arpack_cg(VOLUME/2,solver_params.arpackcg_nrhs,solver_params.arpackcg_nrhs1, Odd_new, g_spinor_field[DUM_DERI],&Qtm_pm_psi,
-                        solver_params.arpackcg_eps_sq1,precision,solver_params.arpackcg_res_eps_sq,rel_prec,max_iter,
-                        solver_params.arpackcg_nev,solver_params.arpackcg_ncv,solver_params.arpackcg_eig_tol,solver_params.arpackcg_eig_maxiter);
+                              solver_params.arpackcg_eps_sq1,precision,solver_params.arpackcg_res_eps_sq,rel_prec,max_iter,
+                              solver_params.arpackcg_nev,solver_params.arpackcg_ncv,solver_params.arpackcg_eig_tol,solver_params.arpackcg_eig_maxiter);
        Qtm_minus_psi(Odd_new, Odd_new);
      }
     else if(solver_flag == ARPACKPOLYCG) {
