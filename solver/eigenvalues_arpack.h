@@ -5,7 +5,7 @@
  *
  * Author: A.M. Abdel-Rehim, 2014
  *
- * For reference see the driver programs zndrv1 and in the EXAMPLES 
+ * For reference see the driver programs zndrv1 in the EXAMPLES 
  * subdriectories of ARPACK and PARPACK.
  *
  * This file is part of tmLQCD software suite
@@ -16,7 +16,7 @@
 
 #include "su3.h"
 #include "solver/matrix_mult_typedef.h"
-#include "linalg/fortran.h"
+#include "linalg/arpack.h"
 #include "memalloc.h"
 #include "solver/precon.h"
 
