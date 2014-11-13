@@ -574,12 +574,12 @@ inline void rmQuotes(char *str){
   {SPC}*EigCGtolsq1{EQL}{FLT} {
     sscanf(yytext, " %[a-zA-Z1] = %lf", name, &c);
     (optr->solver_params).eigcg_tolsq1 = c;
-    if(myverbose) printf("  EigCGtolsq1 set to %lf line %d operator %d\n", a, line_of_file, current_operator);
+    if(myverbose) printf("  EigCGtolsq1 set to %lf line %d operator %d\n", c, line_of_file, current_operator);
   }
   {SPC}*EigCGrestolsq{EQL}{FLT} {
     sscanf(yytext, " %[a-zA-Z] = %lf", name, &c);
     (optr->solver_params).eigcg_restolsq = c;
-    if(myverbose) printf("  EigCGrestolsq set to %lf line %d operator %d\n", a, line_of_file, current_operator);
+    if(myverbose) printf("  EigCGrestolsq set to %lf line %d operator %d\n", c, line_of_file, current_operator);
   }
   {SPC}*EigCGRandGuessOpt{EQL}{DIGIT}+ {
     sscanf(yytext, " %[a-zA-Z] = %d", name, &a);
@@ -614,17 +614,17 @@ inline void rmQuotes(char *str){
   {SPC}*ARPACKCGtolsq1{EQL}{FLT} {
     sscanf(yytext, " %[a-zA-Z1] = %lf", name, &c);
     (optr->solver_params).arpackcg_eps_sq1 = c;
-    if(myverbose) printf("  arpackcg_eps_sq1 set to %lf line %d operator %d\n", a, line_of_file, current_operator);
+    if(myverbose) printf("  arpackcg_eps_sq1 set to %lf line %d operator %d\n", c, line_of_file, current_operator);
   }
   {SPC}*ARPACKCGrestolsq{EQL}{FLT} {
     sscanf(yytext, " %[a-zA-Z1] = %lf", name, &c);
     (optr->solver_params).arpackcg_res_eps_sq = c;
-    if(myverbose) printf("  arpackcg_res_eps_sq set to %lf line %d operator %d\n", a, line_of_file, current_operator);
+    if(myverbose) printf("  arpackcg_res_eps_sq set to %lf line %d operator %d\n", c, line_of_file, current_operator);
   }
   {SPC}*ARPACKCGeigtol{EQL}{FLT} {
     sscanf(yytext, " %[a-zA-Z1] = %lf", name, &c);
     (optr->solver_params).arpackcg_eig_tol = c;
-    if(myverbose) printf("  arpackcg_eig_tol set to %lf line %d operator %d\n", a, line_of_file, current_operator);
+    if(myverbose) printf("  arpackcg_eig_tol set to %lf line %d operator %d\n", c, line_of_file, current_operator);
   }
   {SPC}*ChebPolyDegree{EQL}{DIGIT}+ {
     sscanf(yytext, " %[a-zA-Z] = %d", name, &a);
@@ -634,12 +634,12 @@ inline void rmQuotes(char *str){
   {SPC}*EVminHPD{EQL}{FLT} {
     sscanf(yytext, " %[a-zA-Z1] = %lf", name, &c);
     (optr->solver_params).op_evmin = c;
-    if(myverbose) printf("  op_evmin set to %lf line %d operator %d\n", a, line_of_file, current_operator);
+    if(myverbose) printf("  op_evmin set to %lf line %d operator %d\n", c, line_of_file, current_operator);
   }
   {SPC}*EVmaxHPD{EQL}{FLT} {
     sscanf(yytext, " %[a-zA-Z1] = %lf", name, &c);
     (optr->solver_params).op_evmax = c;
-    if(myverbose) printf("  op_evmax set to %lf line %d operator %d\n", a, line_of_file, current_operator);
+    if(myverbose) printf("  op_evmax set to %lf line %d operator %d\n", c, line_of_file, current_operator);
   }
   {SPC}*ExtraMasses{EQL}{FLTLIST} {
     char * token = NULL;
