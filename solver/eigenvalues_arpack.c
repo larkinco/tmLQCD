@@ -85,7 +85,7 @@ void evals_arpack(int n, int nev, int ncv, char *which, _Complex double *evals, 
    tmpv1  = (spinor *) alloc_aligned_mem(ldv*sizeof(spinor));
    tmpv2  = (spinor *) alloc_aligned_mem(ldv*sizeof(spinor));
    workev = (_Complex double *) alloc_aligned_mem(3*ncv*sizeof(_Complex double));
-   resid  = (_Complex double *) alloc_aligned_mem(12*n*sizeof(_Complex double));
+   resid  = (_Complex double *) alloc_aligned_mem(12*ldv*sizeof(_Complex double));
    workl  = (_Complex double *) alloc_aligned_mem(lworkl*sizeof(_Complex double));
    rwork  = (double *) alloc_aligned_mem(  ncv*sizeof(double));
    rd     = (double *) alloc_aligned_mem(3*ncv*sizeof(double));
@@ -138,8 +138,10 @@ void evals_arpack(int n, int nev, int ncv, char *which, _Complex double *evals, 
                   (_Complex double *) v, &N, iparam, ipntr, (_Complex double *) workd, 
                   workl, &lworkl,rwork,info );
       #endif
-      if ((ido==-1)||(ido==1)){ 
-         av(workd+(ipntr[1]-1)/12, workd+(ipntr[0]-1)/12);
+      if ((ido==-1)||(ido==1)){
+         assign(tmpv1, (spinor *) workd+(ipntr[0]-1)/12,n);
+         av(tmpv2,tmpv1); 
+         assign((spinor *) workd+(ipntr[1]-1)/12, tmpv2, n);
       }
       
    } while ((ido==-1)||(ido==1));
