@@ -66,4 +66,6 @@ int arpack_cg(
                                            1 means a starting vector will be provided by the user. In this case a vector
                                              built of of the T_k(f)v will be used where v is a random vector and T_k is
                                              the chebyshev polynomial used for acceleration.*/ 
-     ); 
+     );
+
+#endif 
