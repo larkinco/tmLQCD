@@ -69,10 +69,15 @@ typedef struct {
    *chebychev polynomila preconditioner
    *for CG related paprameters
    *************************************/
-
+   int use_acc; //type of acceleration to be used: 
+                //0 no acceleration, 1 compute eiegnvectors of the acceleration polynomial, 
+                //2 use roots of the chebyshev polynomial as shifts (polynomial not computed explicitly)  
    int cheb_k; //order of the polynomial used is k+1 and the lowest value is k=-1 which correspond to T_0
    double op_evmin;  //some estimate of the lowest eigenvalue
    double op_evmax;  //some estimate of the largest eigenvalue
+   int arpack_init_resid; //0 means start with a random vector that arpack produces internally
+                          //1 means pass a preconditioned initial vector T_k(A)v where v is 
+                          // a random vector and T_k(A) is the acceleration polynomial
    
    
 } solver_params_t;

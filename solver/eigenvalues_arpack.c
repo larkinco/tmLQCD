@@ -28,72 +28,147 @@
 #include "solver/eigenvalues_arpack.h"
 
 
-//ARPACK driver routines for computing eigenvectors 
-static void _FT(znaupd) (int *ido, char *bmat, int *n, char *which, int *nev, double *tol,
-                          _Complex double *resid, int *ncv, _Complex double *v, int *ldv, 
-                          int *iparam, int *ipntr, _Complex double *workd, _Complex double *workl, 
-                          int *lworkl, double *rwork, int *info );
+/*compute nev eigenvectors using ARPACK and PARPACK*/
+void evals_arpack(
+  int n, 
+  int nev, 
+  int ncv, 
+  int which,
+  int use_acc,
+  int init_resid_arpack, 
+  int cheb_k,
+  double amin,
+  double amax,
+  _Complex double *evals, 
+  spinor *v, 
+  double tol, 
+  int maxiter, 
+  matrix_mult av, 
+  int *info, 
+  int *nconv)
+/*
+  compute nev eigenvectors using ARPACK and PARPACK
+  n     : (IN) size of the local lattice
+  nev   : (IN) number of eigenvectors requested.
+  ncv   : (IN) size of the subspace used to compute eigenvectors (nev+1) =< ncv < 12*n
+          where 12n is the size of the matrix under consideration
+  which : (IN) which eigenvectors to compute. Choices are:
+          0: smallest magnitude
+          1: largest magintude
+  use_acc: (IN) specify the polynomial acceleration mode
+                0 no acceleration
+                1 use acceleration by computing the eigenvectors of a shifted-normalized chebyshev polynomial
+                2 use acceleration by using the roots of Chebyshev polynomial as shifts
+  init_resid_arpack: (IN) specify the initial residual passed to arpack for computing eigenvectors
+                          0 arpack uses a random intiial vector
+                          1 provide a starting vector for arpack which is obtained by chebyshev
+                            polynomial in order to enhance the components of the requested eiegenvectors
+  cheb_k: (IN) degree of the chebyshev polynomial to be used for acceleration (irrelevant when use_acc=0 and init_resid_arpack=0)
+  amin,amax: (IN) bounds of the interval [amin,amax] for the acceleration polynomial (irrelevant when use_acc=0 and init_resid_arpack=0)
+  evals : Computed eigenvalues. Size is ncv complex doubles.
+  v     : orthonormal basis (schur vectors) of the eigenvectors. Size is ncv*ldv (ldv includes the communication buffer) spinors.
+  tol    : Requested tolerance for the accuracy of the computed eigenvectors.
+           A value of 0 means machine precision.
+  maxiter: maximum number of restarts (iterations) allowed to be used by ARPACK
+  av     : operator for computing the action of the matrix on the vector
+           av(vout,vin) where vout is output spinor and vin is input spinors.
+  info   : output from arpack. 0 means that it converged to the desired tolerance. 
+           otherwise, an error message is printed to stderr 
+  nconv  : actual number of converged eigenvectors.
+*/ 
 
-static void _FT(zneupd) (int *comp_evecs,char *cA, int *select, _Complex double *evals, 
-                         _Complex double *v, int *ldv, _Complex double *sigma, _Complex double *workev, 
-                         char *bmat, int *n, char *which, int *nev, double *tol, _Complex double *resid, 
-                         int *ncv, _Complex double *v1, int *ldv1, int *iparam, int *ipntr, 
-                         _Complex double *workd, _Complex double *workl, int *lworkl, double *rwork, int *ierr);
-
-//PARPACK routines
-static void _FT(pznaupd) (int *comm, int *ido, char *bmat, int *n, char *which, int *nev, double *tol, 
-                         _Complex double *resid, int *ncv, _Complex double *v, int *ldv, int *iparam, 
-                         int *ipntr, _Complex double *workd, _Complex double *workl, int *lworkl,
-                         double *rwork, int *info );
-
-static void _FT(pzneupd) (int *comm, int *comp_evecs,char *cA, int *select, _Complex double *evals, 
-                          _Complex double *v, int *ldv, _Complex double *sigma, _Complex double *workev, 
-                          char *bmat, int *n, char *which, int *nev, double *tol, _Complex double *resid, 
-                          int *ncv, _Complex double *v1, int *ldv1, int *iparam, int *ipntr, 
-                          _Complex double *workd, _Complex double *workl, int *lworkl, double *rwork, int *ierr);
+   //create the MPI communicator
+   #ifdef MPI
+   MPI_Comm comm; //communicator used when we call PARPACK
+   int comm_err = MPI_Comm_dup(MPI_COMM_WORLD,&comm); //duplicate the MPI_COMM_WORLD to create a communicator to be used with arpack
+   if(comm_err != MPI_SUCCESS) { //error when trying to duplicate the communicator
+     if(g_proc_id == g_stdio_proc){
+       fprintf(stderr,"MPI_Comm_dup return with an error. Exciting...\n");
+       exit(-1);
+     }
+   }
+   #endif
 
 
+   int ido; //control of the action taken by reverse communications
 
-void evals_arpack(int n, int nev, int ncv, char *which, _Complex double *evals, spinor *v, double tol, int maxiter, matrix_mult av, int *info, int *nconv)
-{
-   int N,ldv;
+   char bmat= 'I';     /* Specifies that the right hand side matrix
+                          should be the identity matrix; this makes
+                          the problem a standard eigenvalue problem.
+                       */
+
+   //matrix dimensions 
+   int ldv,N,LDV;
   
    if(n==VOLUME) //full 
      ldv= VOLUMEPLUSRAND;
    else          //even-odd
      ldv= VOLUMEPLUSRAND/2;
+
+   //dimesnions as complex variables
+   N=12*n;       //dimension
+   LDV=12*ldv;   //leading dimension (including communication buffers)
    
-   N=12*n;  //size of the matrix as complex double
+
+
+   char *which_evals;
+
+   if(which==0)
+     which_evals="SM";
+   else
+     which_evals="LM";
+
 
    //check input
    if(nev>=N) nev=N-1;
    if(ncv < (nev+1)) ncv = nev+1;
 
- 
+   spinor *resid  = (spinor *) alloc_aligned_mem(ldv*sizeof(spinor));
+
+   int *iparam = (int *) malloc(11*sizeof(int));
+
+   int *ipntr  = (int *) malloc(14*sizeof(int));
+
+   spinor *workd  = (spinor *) alloc_aligned_mem(3*n*sizeof(spinor));
+
+   int lworkl  = 3*ncv*ncv+5*ncv;   //size of workl array 
+
+   double *rwork  = (double *) alloc_aligned_mem(  ncv*sizeof(double));
+
+
+
+   unsigned int rvec=1; //always compute eigenvectors
+
+   char howmany='P';   //compute orthonormal basis (Schur vectors)
+
+   spinor *zv; //this is for the eigenvectors and won't be referenced when howmany='P'
+
+   int *select = (int *) malloc(ncv*sizeof(int)); //since all Ritz vectors or Schur vectors are computed no need to initialize this array
+
+
+
+
+
+
+
    //parameters for the ARPACK routines--see documentation or source files
-   int ido,lworkl,j,ierr,ishfts,mode;
+   int lworkl,j,ierr,ishfts,mode;
    _Complex double sigma;
    int comp_evecs=1; //option to compute the eigenvectors (always set to true here)
    lworkl  = 3*ncv*ncv+5*ncv;   //size of workl array 
-   int *iparam = (int *) malloc(11*sizeof(int));
-   int *ipntr  = (int *) malloc(14*sizeof(int));
    int *select = (int *) malloc(ncv*sizeof(int));
    spinor *workd,*tmpv1,*tmpv2;
-   _Complex double *workev, *resid, *workl; 
+   _Complex double *workev, *workl; 
    double *rwork,*rd;
+
    workd  = (spinor *) alloc_aligned_mem(3*ldv*sizeof(spinor));
    tmpv1  = (spinor *) alloc_aligned_mem(ldv*sizeof(spinor));
    tmpv2  = (spinor *) alloc_aligned_mem(ldv*sizeof(spinor));
    workev = (_Complex double *) alloc_aligned_mem(3*ncv*sizeof(_Complex double));
-   resid  = (_Complex double *) alloc_aligned_mem(12*ldv*sizeof(_Complex double));
    workl  = (_Complex double *) alloc_aligned_mem(lworkl*sizeof(_Complex double));
    rwork  = (double *) alloc_aligned_mem(  ncv*sizeof(double));
    rd     = (double *) alloc_aligned_mem(3*ncv*sizeof(double));
 
-   char bmat[]= "I";     /* Specifies that the right hand side matrix
-                            should be the identity matrix; this makes
-                            the problem a standard eigenvalue problem.
-                         */
    char cA='A';
 
    int parallel;

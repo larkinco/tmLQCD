@@ -21,21 +21,45 @@
 #include "solver/precon.h"
 
 
-void evals_arpack(int n, int nev, int ncv, char *which, _Complex double *evals, spinor *v, double tol, int maxiter, matrix_mult av, int *info, int *nconv);
+/*compute nev eigenvectors using ARPACK and PARPACK*/
+void evals_arpack(
+  int n, 
+  int nev, 
+  int ncv, 
+  int which,
+  int use_acc,
+  int init_resid_arpack, 
+  int cheb_k,
+  double amin,
+  double amax,
+  _Complex double *evals, 
+  spinor *v,
+  double tol, 
+  int maxiter, 
+  matrix_mult av, 
+  int *info, 
+  int *nconv);
 /*
   compute nev eigenvectors using ARPACK and PARPACK
-  n     : size of the lattice
-  nev   : number of eigenvectors requested.
-  ncv   : size of the subspace used to compute eigenvectors (nev+1) =< ncv 
-  which : which eigenvectors to compute. Choices are:
-          LM: largest magnitude
-          SM: smallest magnitude
-          LA: largest real component
-          SA: smallest real compoent
-          LI: largest imaginary component
-          SI: smallest imaginary component
+  n     : (IN) size of the local lattice
+  nev   : (IN) number of eigenvectors requested.
+  ncv   : (IN) size of the subspace used to compute eigenvectors (nev+1) =< ncv < 12*n
+          where 12n is the size of the matrix under consideration
+  which : (IN) which eigenvectors to compute. Choices are:
+          0: smallest magnitude
+          1: largest magintude
+  use_acc: (IN) specify the polynomial acceleration mode
+                0 no acceleration
+                1 use acceleration by computing the eigenvectors of a shifted-normalized chebyshev polynomial
+                2 use acceleration by using the roots of Chebyshev polynomial as shifts
+  init_resid_arpack: (IN) specify the initial residual passed to arpack for computing eigenvectors
+                          0 arpack uses a random intiial vector
+                          1 provide a starting vector for arpack which is obtained by chebyshev
+                            polynomial in order to enhance the components of the requested eiegenvectors
+  cheb_k: (IN) degree of the chebyshev polynomial to be used for acceleration (irrelevant when use_acc=0 and init_resid_arpack=0)
+  amin,amax: (IN) bounds of the interval [amin,amax] for the acceleration polynomial (irrelevant when use_acc=0 and init_resid_arpack=0)
   evals : Computed eigenvalues. Size is ncv complex doubles.
-  v     : Computed eigenvectors. Size is ncv*n spinors.
+  v     : orthonormal basis (schur vectors) of the eigenvectors. Size is ncv*ldv (ldv includes the communication buffer) spinors.
   tol    : Requested tolerance for the accuracy of the computed eigenvectors.
            A value of 0 means machine precision.
   maxiter: maximum number of restarts (iterations) allowed to be used by ARPACK
@@ -45,103 +69,5 @@ void evals_arpack(int n, int nev, int ncv, char *which, _Complex double *evals, 
            otherwise, an error message is printed to stderr 
   nconv  : actual number of converged eigenvectors.
 */ 
-
-
-
-//this version computes the eigenvectors of a shifted operator A+lambda*I
-void evals_arpack_shift(int n, int nev, int ncv, char *which, _Complex double *evals, spinor *v, double tol, int maxiter, matrix_mult av, int *info, int *nconv);
-/*
-  compute nev eigenvectors using ARPACK and PARPACK
-  n     : size of the lattice
-  nev   : number of eigenvectors requested.
-  ncv   : size of the subspace used to compute eigenvectors (nev+1) =< ncv 
-  which : which eigenvectors to compute. Choices are:
-          LM: largest magnitude
-          SM: smallest magnitude
-          LA: largest real component
-          SA: smallest real compoent
-          LI: largest imaginary component
-          SI: smallest imaginary component
-  evals : Computed eigenvalues. Size is ncv complex doubles.
-  v     : Computed eigenvectors. Size is ncv*n spinors.
-  tol    : Requested tolerance for the accuracy of the computed eigenvectors.
-           A value of 0 means machine precision.
-  maxiter: maximum number of restarts (iterations) allowed to be used by ARPACK
-  av     : operator for computing the action of the matrix on the vector
-           av(vout,vin) where vout is output spinor and vin is input spinors.
-  info   : output from arpack. 0 means that it converged to the desired tolerance. 
-           otherwise, an error message is printed to stderr 
-  nconv  : actual number of converged eigenvectors.
-*/ 
-
-
-
-
-
-void evals_arpack_poly_hermitian(int n, int nev, int ncv, char *which, _Complex double *evals, spinor *v, double tol, int maxiter, 
-                                 matrix_mult av, double evmin, double evmax, int cheb_k, int *info, int *nconv);
-/*
-  compute nev eigenvectors for the Hermitian operator with polynomial preconditioning using Ceyshev polynomials using ARPACK and PARPACK 
-  n     : size of the lattice
-  nev   : number of eigenvectors requested.
-  ncv   : size of the subspace used to compute eigenvectors (nev+1) =< ncv 
-  which : which eigenvectors to compute. Choices are:
-          LM: largest magnitude
-          SM: smallest magnitude
-          LA: largest real component
-          SA: smallest real compoent
-          LI: largest imaginary component
-          SI: smallest imaginary component
-  evals : Computed eigenvalues. Size is ncv complex doubles.
-  v     : Computed eigenvectors. Size is ncv*n spinors.
-  tol    : Requested tolerance for the accuracy of the computed eigenvectors.
-           A value of 0 means machine precision.
-  maxiter: maximum number of restarts (iterations) allowed to be used by ARPACK
-  av     : operator for computing the action of the matrix on the vector
-           av(vout,vin) where vout is output spinor and vin is input spinors.
-  cheb_k : the degree of the chebychev polynomial.
-  evmin  : smallest eigenvalue of the chebyshev polynomial
-  evmax  : largest eigenvalue of the chebyshev polynomial
-  info   : output from arpack. 0 means that it converged to the desired tolerance. 
-           otherwise, an error message is printed to stderr 
-  nconv  : actual number of converged eigenvectors.
-*/ 
-
-
-//In this version, polynomial acceleration is used but implemented through passing the roots of chebyshev
-//polynomials to be used by arpack instead of the explicit shifts
-void evals_arpack_poly_hermitian_shifts(int n, int nev, int ncv, char *which, _Complex double *evals, spinor *v, double tol, int maxiter, 
-                                 matrix_mult av, double evmin, double evmax, int *info, int *nconv);
-/*
-  compute nev eigenvectors for the Hermitian operator with polynomial preconditioning using Ceyshev polynomials using ARPACK and PARPACK 
-  n     : size of the lattice
-  nev   : number of eigenvectors requested.
-  ncv   : size of the subspace used to compute eigenvectors (nev+1) =< ncv
-  which : which eigenvectors to compute. Choices are:
-          LM: largest magnitude
-          SM: smallest magnitude
-          LA: largest real component
-          SA: smallest real compoent
-          LI: largest imaginary component
-          SI: smallest imaginary component
-  evals : Computed eigenvalues. Size is ncv complex doubles.
-  v     : Computed eigenvectors. Size is ncv*n spinors.
-  tol    : Requested tolerance for the accuracy of the computed eigenvectors.
-           A value of 0 means machine precision.
-  maxiter: maximum number of restarts (iterations) allowed to be used by ARPACK
-  av     : operator for computing the action of the matrix on the vector
-           av(vout,vin) where vout is output spinor and vin is input spinors.
-  evmin  : smallest eigenvalue of the chebyshev polynomial
-  evmax  : largest eigenvalue of the chebyshev polynomial
-  info   : output from arpack. 0 means that it converged to the desired tolerance. 
-           otherwise, an error message is printed to stderr 
-  nconv  : actual number of converged eigenvectors.
-*/ 
-
-
-
-
-
-
 
 #endif
