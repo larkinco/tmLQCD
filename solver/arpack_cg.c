@@ -77,8 +77,10 @@ int arpack_cg(
   //Static variables and arrays.
   static int ncurRHS=0;                  /* current number of the system being solved */                   
   static spinor *evecs,*ax,*r;                  
-  static _Complex double *evals,*H,*HU,*initwork; 
+  static _Complex double *evals,*H,*HU,*initwork;
+  static int *IPIV; 
   char *which="SM";
+  _Complex double c1,c2;
   static int info_arpack=0, nconv_arpack=0;
   /* leading dimension for spinor vectors */
   int LDN;
@@ -87,7 +89,15 @@ int arpack_cg(
   else
      LDN = VOLUMEPLUSRAND/2;
 
+  int i,j;
+  int parallel;        /* for parallel processing of the scalar products */
+  #ifdef MPI
+    parallel=1;
+  #else
+    parallel=0;
+  #endif
 
+  double cur_res; //current residual squared
   double et1,et2;  //timers for computing eigenvetors using arpack
   //before solving 
   if(ncurRHS==0){ 
@@ -104,6 +114,9 @@ int arpack_cg(
     }
     
     if(info_arpack == 0){
+      H  = (_Complex double *) alloc_aligned_mem(nconv_arpack*nconv_arpack*sizeof(_Complex double));
+      HU = (_Complex double *) alloc_aligned_mem(nconv_arpack*nconv_arpack*sizeof(_Complex double));
+      IPIV = (int *) alloc_aligned_mem(nconv_arpack*sizeof(int));
       initwork = (_Complex double *) alloc_aligned_mem(nconv_arpack*sizeof(_Complex double));
       if(g_proc_id == g_stdio_proc)
         fprintf(stdout,"ARPACK time: %-f\n",et2-et1);
@@ -113,18 +126,24 @@ int arpack_cg(
     ax     = (spinor *) alloc_aligned_mem(LDN*sizeof(spinor));
     r      = (spinor *) alloc_aligned_mem(LDN*sizeof(spinor));
 
+    //compute the elements of the hermitian matrices H and HU
+    for(i=0; i<nconv_arpack; i++)
+    {
+       f(ax,&evecs[i*N]);
+       for(j=i; j<nconv_arpack; j++)
+       {
+          c1 = scalar_prod(&evecs[j*N],ax,N,parallel);
+          H[j+nconv_arpack*i] = c1;
+          H[i+nconv_arpack*j] = conj(c1);   
+          HU[j+nconv_arpack*i] = c1;
+          HU[i+nconv_arpack*j] = conj(c1);
+       }   
+    }
+
   }
     
   double eps_sq_used,restart_eps_sq_used;  //tolerance squared for the linear system
 
-  int parallel;        /* for parallel processing of the scalar products */
-  #ifdef MPI
-    parallel=1;
-  #else
-    parallel=0;
-  #endif
-
-  double cur_res; //current residual squared
 
   /*increment the RHS counter*/
   ncurRHS = ncurRHS +1; 
@@ -148,6 +167,8 @@ int arpack_cg(
   double wt1,wt2,wE,wI;
   double normsq,tol_sq;
   int flag,maxit_remain,numIts,its;
+  int ONE=1;
+  int info_lapack;
 
   wE = 0.0; wI = 0.0;     /* Start accumulator timers */
   flag = -1;    	  /* System has not converged yet */
@@ -187,10 +208,24 @@ int arpack_cg(
      
 
       /* x = x + evecs*inv(H)*evecs'*r */
-      for(int i=0; i < nconv_arpack; i++)
+      for( i=0; i < nconv_arpack; i++)
       {
          initwork[i]= scalar_prod(&evecs[i*N],r,N,parallel);
-         initwork[i] = initwork[i]/evals[i];
+      }
+
+      _FT(zgesv) (&nconv_arpack,&ONE,HU,&nconv_arpack,IPIV,initwork,&nconv_arpack,&info_lapack);
+      if(info_lapack != 0)
+      {
+         if(g_proc_id == g_stdio_proc) {
+            fprintf(stderr, "Error in ZGESV:, info =  %d\n",info_lapack); 
+            fflush(stderr);
+         }
+         exit(1);
+      }
+
+      for(i=0; i<nconv_arpack; i++)
+      {
+         //initwork[i] = initwork[i]/evals[i];
          assign_add_mul(x,&evecs[i*N],initwork[i],N);
       }
       
