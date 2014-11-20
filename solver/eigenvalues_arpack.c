@@ -111,7 +111,7 @@ void evals_arpack(
      ldv= VOLUMEPLUSRAND/2;
 
    //dimesnions as complex variables
-   N=12*n;       //dimension
+   N  =12*n;       //dimension
    LDV=12*ldv;   //leading dimension (including communication buffers)
    
 
@@ -154,9 +154,9 @@ void evals_arpack(
 
    double *rwork  = (double *) alloc_aligned_mem(  ncv*sizeof(double));
 
-   unsigned int rvec=1; //always compute eigenvectors
+   int rvec=1; //always compute eigenvectors
 
-   char howmany='A';   //compute orthonormal basis (Schur vectors)
+   char howmany='A';   //compute eigenvectors
 
    //spinor *zv; //this is for the eigenvectors and won't be referenced when howmany='P'
 
@@ -184,11 +184,11 @@ void evals_arpack(
    do
    {
       #ifndef MPI 
-      _FT(znaupd)(&ido, &bmat, &N, which_evals, &nev, &tol, resid, &ncv,
+      _FT(znaupd)(&ido, &bmat, &N, which_evals, &nev, &tol, (_Complex double *) resid, &ncv,
                   (_Complex double *) v, &N, iparam, ipntr, workd, 
                   workl, &lworkl,rwork,info );
       #else
-      _FT(pznaupd)(&comm, &ido, &bmat, &N, which_evals, &nev, &tol, resid, &ncv,
+      _FT(pznaupd)(&comm, &ido, &bmat, &N, which_evals, &nev, &tol, (_Complex double *) resid, &ncv,
                   (_Complex double *) v, &N, iparam, ipntr, workd, 
                   workl, &lworkl,rwork,info );
       #endif
@@ -216,18 +216,22 @@ void evals_arpack(
             fprintf(stderr,"Check the documentation of _naupd\n");}
      }
      else 
-     { 
+     {
+        (*nconv) = iparam[4];
+        if(g_proc_id == g_stdio_proc){
+          fprintf(stderr,"number of converged eigenvectors = %d\n", *nconv);}
+
         //compute eigenvectors 
         #ifndef MPI
-        _FT(zneupd) (&rvec,&howmany, select,evals,v,&N,&sigma, 
-                     workev,&bmat,&N,which_evals,&nev,&tol,resid,&ncv, 
-                     v,&N,iparam,ipntr,workd,workl,&lworkl, 
-                     rwork,&info);
+        _FT(zneupd) (&rvec,&howmany, select,evals,(_Complex double *) v,&N,&sigma, 
+                     workev,&bmat,&N,which_evals,&nev,&tol,(_Complex double *) resid,&ncv, 
+                     (_Complex double *) v,&N,iparam,ipntr,workd,workl,&lworkl, 
+                     rwork,info);
         #else
-        _FT(pzneupd) (&comm,&rvec,&howmany, select,evals,v,&N,&sigma, 
-                     workev,&bmat,&N,which_evals,&nev,&tol,resid,&ncv, 
-                     v,&N,iparam,ipntr,workd,workl,&lworkl, 
-                     rwork,&info);
+        _FT(pzneupd) (&comm,&rvec,&howmany, select,evals, (_Complex double *) v,&N,&sigma, 
+                     workev,&bmat,&N,which_evals,&nev,&tol,(_Complex double *) resid,&ncv, 
+                     (_Complex double *) v,&N,iparam,ipntr,workd,workl,&lworkl, 
+                     rwork,info);
         #endif
 
         /*
@@ -243,10 +247,10 @@ void evals_arpack(
         %----------------------------------------------%
         */
 
-        if( info!=0) 
+        if( (*info)!=0) 
         {
            if(g_proc_id == g_stdio_proc){
-             fprintf(stderr,"Error with _neupd, info = %d \n",info);
+             fprintf(stderr,"Error with _neupd, info = %d \n",(*info));
              fprintf(stderr,"Check the documentation of _neupd. \n");}
         }
         else //report eiegnvalues and their residuals
@@ -296,7 +300,7 @@ void evals_arpack(
         }
         else
         { 
-           
+          
            if(g_proc_id == g_stdio_proc)
            {
               if((*info)==3)
@@ -316,6 +320,7 @@ void evals_arpack(
               fprintf(stdout,"The number of OP*x is %d\n", iparam[8]);
               fprintf(stdout,"The convergence criterion is %f\n", tol);
            }
+          
         }
      }  //if(info < 0) else part
      
