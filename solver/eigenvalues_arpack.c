@@ -27,31 +27,6 @@
 #include "linalg/lapack.h"
 #include "solver/eigenvalues_arpack.h"
 
-
-/*compute nev eigenvectors using ARPACK and PARPACK*/
-//void evals_arpack(
-//  int n, 
-//  int nev, 
-//  int ncv, 
-//  int which,
-//  int use_acc,
-//  int init_resid_arpack, 
-//  int cheb_k,
-//  double amin,
-//  double amax,
-//  _Complex double *evals, 
-//  spinor *v,
-//  _Complex double *workl,
-//  double tol, 
-//  int maxiter, 
-//  matrix_mult av, 
-//  int *info, 
-//  int *nconv);
-//
-//
-//
-//
-//
 void evals_arpack(
   int n, 
   int nev, 
@@ -64,7 +39,6 @@ void evals_arpack(
   double amax,
   _Complex double *evals, 
   spinor *v,
-  _Complex double *workl, 
   double tol, 
   int maxiter, 
   matrix_mult av, 
@@ -90,8 +64,6 @@ void evals_arpack(
   cheb_k: (IN) degree of the chebyshev polynomial to be used for acceleration (irrelevant when use_acc=0 and init_resid_arpack=0)
   amin,amax: (IN) bounds of the interval [amin,amax] for the acceleration polynomial (irrelevant when use_acc=0 and init_resid_arpack=0)
   evals : (OUT) array of size nev+1 which has the computed Ritz values
-  workl : (OUT) work array that has needed information about the schur decomposition and Ritz values
-                size 3*ncv^2 + 5*ncv
   v     : orthonormal basis (schur vectors) of the eigenvectors. Size is ncv*ldv (ldv includes the communication buffer) spinors.
   tol    : Requested tolerance for the accuracy of the computed eigenvectors.
            A value of 0 means machine precision.

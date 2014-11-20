@@ -136,6 +136,7 @@ int add_operator(const int type) {
    (optr->solver_params).arpackcg_res_eps_sq=0.0;    
    (optr->solver_params).arpackcg_nev=0;           
    (optr->solver_params).arpackcg_ncv=0;          
+   (optr->solver_params).arpackcg_evals_kind=0;          
    (optr->solver_params).arpackcg_eig_tol=0.0;       
    (optr->solver_params).arpackcg_eig_maxiter=0;   
    

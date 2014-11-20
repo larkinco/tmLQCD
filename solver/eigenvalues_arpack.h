@@ -1,12 +1,12 @@
 /*********************************************************************** 
  * Interface for solving the eigenvalue problem A*x=lambda*x 
- * for a complex matrix A using ARPACK and PARPACK. The matrix
- * is accessed through a matrix-vector multiplication function.
+ * for a complex matrix A using ARPACK. The matrix is accessed through 
+ * a matrix-vector multiplication function.
  *
  * Author: A.M. Abdel-Rehim, 2014
  *
  * For reference see the driver programs zndrv1 in the EXAMPLES 
- * subdriectories of ARPACK and PARPACK.
+ * subdriectories of ARPACK and PARPACK and the documentation.
  *
  * This file is part of tmLQCD software suite
  ***********************************************************************/
@@ -34,7 +34,6 @@ void evals_arpack(
   double amax,
   _Complex double *evals, 
   spinor *v,
-  _Complex double *workl,
   double tol, 
   int maxiter, 
   matrix_mult av, 
@@ -60,9 +59,8 @@ void evals_arpack(
   cheb_k: (IN) degree of the chebyshev polynomial to be used for acceleration (irrelevant when use_acc=0 and init_resid_arpack=0)
   amin,amax: (IN) bounds of the interval [amin,amax] for the acceleration polynomial (irrelevant when use_acc=0 and init_resid_arpack=0)
   evals : (OUT) array of size nev+1 which has the computed Ritz values
-  workl : (OUT) work array that has needed information about the schur decomposition and Ritz values
-                size 3*ncv^2 + 5*ncv
   v     : orthonormal basis (schur vectors) of the eigenvectors. Size is ncv*ldv (ldv includes the communication buffer) spinors.
+  
   tol    : Requested tolerance for the accuracy of the computed eigenvectors.
            A value of 0 means machine precision.
   maxiter: maximum number of restarts (iterations) allowed to be used by ARPACK

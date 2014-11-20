@@ -19,10 +19,7 @@
  * You should have received a copy of the GNU General Public License
  * along with tmLQCD.  If not, see <http://www.gnu.org/licenses/>.
  *
- *
- * Incremental eigCG for solving linear systems multiple right-hand sides
  ****************************************************************************/
-/* A sample input is given in the sample-input folder */
 
 #ifdef HAVE_CONFIG_H
 # include<config.h>
@@ -45,46 +42,6 @@
 #include "linalg/lapack.h"
 #include "solver_field.h"
 #include "solver/arpack_cg.h"
-#include "solver/cg_her.h"
-
-
-//int arpack_cg(
-//     const int N,             /*(IN) Number of lattice sites for this process*/
-//     const int nrhs,          /*(IN) Number of right-hand sides to be solved*/ 
-//     const int nrhs1,         /*(IN) First number of right-hand sides to be solved using tolerance eps_sq1*/ 
-//     spinor * const x,        /*(IN/OUT) initial guess on input, solution on output for this RHS*/
-//     spinor * const b,        /*(IN) right-hand side*/
-//     matrix_mult f,           /*(IN) f(s,r) computes s=A*r, i.e. matrix-vector multiply*/
-//     const double eps_sq1,    /*(IN) squared tolerance of convergence of the linear system for systems 1 till nrhs1*/
-//     const double eps_sq,     /*(IN) squared tolerance of convergence of the linear system for systems nrhs1+1 till nrhs*/
-//     const double res_eps_sq, /*(IN) suqared tolerance for restarting cg */
-//     const int rel_prec,      /*(IN) 0 for using absoute error for convergence
-//                                     1 for using relative error for convergence*/
-//     const int maxit,         /*(IN) Maximum allowed number of iterations to solution for the linear system*/
-//     //parameters for arpack
-//     const int nev,                 /*(IN) number of eigenvectors to be computed by arpack*/
-//     const int ncv,                 /*(IN) size of the subspace used by arpack with the condition (nev+1) =< ncv =< 2*nev */
-//     double arpack_eig_tol,         /*(IN) tolerance for computing eigenvalues with arpack */
-//     int arpack_eig_maxiter,        /*(IN) maximum number of iterations to be used by arpack*/
-//     int kind,                      /*(IN) 0 for smallest eigenvalues, 1 for largest eigenvalues*/
-//     int acc,                       /*(IN) option for using polynomial acceleration:
-//                                           0 no acceleration
-//                                           1 compute the eigenvectors of the acceleration polynomial T_k(f)
-//                                           2 use roots of chebyshev polynomial as shifts but compute eigenvalues of f*/
-//     int cheb_k,                    /*(IN) degree of the Chebyshev polynomial when acc=1 (irrelevant if acc=0 and arpack_initresid=0)*/
-//     int emin,                      /*(IN) lower end of the interval where the acceleration will be used (irrelevant if acc=0&arpack_initresid=0)
-//                                           lower bound such that eigenvalues in the interval [emin,emax] will be damped
-//                                           while eigenvalues outside this interval will be enhanced */
-//     int emax,                       /*(IN) upper end of the interval where polynomial acceleration will be used.
-//                                           Follow the same cases as emin above.*/
-//     int arpack_initresid           /*(IN) 0 means arpack will start with some random vector when computing eigenvectors
-//                                           1 means a starting vector will be provided by the user. In this case a vector
-//                                             built of of the T_k(f)v will be used where v is a random vector and T_k is
-//                                             the chebyshev polynomial used for acceleration.*/ 
-//     );
-
-
-
 
 
 
@@ -129,14 +86,15 @@ int arpack_cg(
   static spinor *evecs,*ax,*r;                  
   static _Complex double *evals,*H,*HU,*initwork;
   int *IPIV; 
-  int which=0;
-  static int info_arpack=0, nconv_arpack=0;
+  static int info_arpack=0;
+  static int ldh=0; //number of converged eigenvectors as returned by arpack
+
   /* leading dimension for spinor vectors */
   int LDN;
   if(N==VOLUME)
      LDN = VOLUMEPLUSRAND;
   else
-     LDN = VOLUMEPLUSRAND/2;
+     LDN = VOLUMEPLUSRAND/2; 
 
   H        = (_Complex double*) alloc_aligned_mem(nev*nev*sizeof(_Complex double ));
   HU       = (_Complex double*) alloc_aligned_mem(nev*nev*sizeof(_Complex double ));
@@ -155,7 +113,7 @@ int arpack_cg(
     et1=gettime();
     evals = (_Complex double *) alloc_aligned_mem(ncv*sizeof(_Complex double));
     evecs = (spinor *) alloc_aligned_mem(ncv*N*sizeof(spinor));
-    evals_arpack(N,nev,ncv,which,0,0,0,0.0,1.0,evals,evecs,workl,arpack_eig_tol,arpack_eig_maxiter,f,&info_arpack,&nconv_arpack);
+    evals_arpack(N,nev,ncv,kind,acc,arpack_initresid,cheb_k,emin,emax,evals,evecs,workl,arpack_eig_tol,arpack_eig_maxiter,f,&info_arpack,&ldh);
     et2=gettime();
 
     if(info_arpack != 0){ //arpack didn't converge
@@ -164,11 +122,15 @@ int arpack_cg(
     }
     
     if(info_arpack == 0){
-      initwork = (_Complex double *) alloc_aligned_mem(nconv_arpack*sizeof(_Complex double));
+      if(g_proc_id == g_stdio_proc)
+        fprintf(stdout,"WARNING: ARPACK has computed %d eigenvectors\n",ldh);
+      H        = (_Complex double*) alloc_aligned_mem(ldh*ldh*sizeof(_Complex double ));
+      HU       = (_Complex double*) alloc_aligned_mem(ldh*ldh*sizeof(_Complex double ));
+      IPIV     = (int *) alloc_aligned_mem(ldh*sizeof(int));
+      initwork = (_Complex double *) alloc_aligned_mem(ldh*sizeof(_Complex double));
       if(g_proc_id == g_stdio_proc)
         fprintf(stdout,"ARPACK time: %-f\n",et2-et1);
     }
-
     ax     = (spinor *) alloc_aligned_mem(LDN*sizeof(spinor));
     r      = (spinor *) alloc_aligned_mem(LDN*sizeof(spinor));
   }

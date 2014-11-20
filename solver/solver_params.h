@@ -61,7 +61,10 @@ typedef struct {
    double arpackcg_eps_sq;        /*Squared tolerance of convergence of the linear system for systems nrhs1+1 till nrhs*/
    double arpackcg_res_eps_sq;    /*Suqared tolerance for restarting cg */
    int    arpackcg_nev;           /*Number of eigenvectors to be computed by arpack*/
-   int    arpackcg_ncv;           /*Size of the subspace used by arpack with the condition (nev+1) =< ncv =< 2*nev */
+   int    arpackcg_ncv;           /*Size of the subspace used by arpack with the condition (nev+1) =< ncv */
+   int    arpackcg_evals_kind;    /* type of eigenvalues to be computed 
+                                     0 eigenvalues of smallest magnitude
+                                     1 eigenvalues of largest magnitude */
    double arpackcg_eig_tol;       /*Tolerance for computing eigenvalues with arpack */
    int    arpackcg_eig_maxiter;   /*Maximum number of iterations to be used by arpack*/
 

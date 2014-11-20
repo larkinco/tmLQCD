@@ -606,6 +606,11 @@ inline void rmQuotes(char *str){
     (optr->solver_params).arpackcg_ncv = a;
     if(myverbose) printf("  arpackcg_ncv set to %d line %d operator %d\n", a, line_of_file, current_operator);
   }
+  {SPC}*ARPACKCGevalsKind{EQL}{DIGIT}+ {
+    sscanf(yytext, " %[a-zA-Z] = %d", name, &a);
+    (optr->solver_params).arpackcg_evals_kind = a;
+    if(myverbose) printf("  arpackcg_evals_kind set to %d line %d operator %d\n", a, line_of_file, current_operator);
+  }
   {SPC}*ARPACKCGeigmaxiter{EQL}{DIGIT}+ {
     sscanf(yytext, " %[a-zA-Z] = %d", name, &a);
     (optr->solver_params).arpackcg_eig_maxiter = a;
