@@ -1,7 +1,7 @@
-/*********************************************************************** 
- * Interface for solving the eigenvalue problem A*x=lambda*x 
- * for a complex matrix A using ARPACK. The matrix is accessed through 
- * a matrix-vector multiplication function.
+/************************************************************************* 
+ * Interface for solving the eigenvalue problem A*x=lambda*x for a complex 
+ * matrix A using ARPACK. The matrix is accessed through a matrix-vector 
+ * multiplication function.
  *
  * Author: A.M. Abdel-Rehim, 2014
  *
@@ -28,7 +28,7 @@ void evals_arpack(
   int ncv, 
   int which,
   int use_acc,
-  int init_resid_arpack, 
+  int init_resid_arpack,
   int cheb_k,
   double amin,
   double amax,
@@ -56,11 +56,10 @@ void evals_arpack(
                           0 arpack uses a random intiial vector
                           1 provide a starting vector for arpack which is obtained by chebyshev
                             polynomial in order to enhance the components of the requested eiegenvectors
-  cheb_k: (IN) degree of the chebyshev polynomial to be used for acceleration (irrelevant when use_acc=0 and init_resid_arpack=0)
+  cheb_k   : (IN) degree of the chebyshev polynomial to be used for acceleration (irrelevant when use_acc=0 and init_resid_arpack=0)
   amin,amax: (IN) bounds of the interval [amin,amax] for the acceleration polynomial (irrelevant when use_acc=0 and init_resid_arpack=0)
-  evals : (OUT) array of size nev+1 which has the computed Ritz values
-  v     : orthonormal basis (schur vectors) of the eigenvectors. Size is ncv*ldv (ldv includes the communication buffer) spinors.
-  
+  evals : (OUT) array of size nev+1 which has the computed nev Ritz values
+  v     : computed eigenvectors. Size is n*ncv spinors.
   tol    : Requested tolerance for the accuracy of the computed eigenvectors.
            A value of 0 means machine precision.
   maxiter: maximum number of restarts (iterations) allowed to be used by ARPACK

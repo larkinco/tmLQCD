@@ -61,10 +61,10 @@ void evals_arpack(
                           0 arpack uses a random intiial vector
                           1 provide a starting vector for arpack which is obtained by chebyshev
                             polynomial in order to enhance the components of the requested eiegenvectors
-  cheb_k: (IN) degree of the chebyshev polynomial to be used for acceleration (irrelevant when use_acc=0 and init_resid_arpack=0)
+  cheb_k   : (IN) degree of the chebyshev polynomial to be used for acceleration (irrelevant when use_acc=0 and init_resid_arpack=0)
   amin,amax: (IN) bounds of the interval [amin,amax] for the acceleration polynomial (irrelevant when use_acc=0 and init_resid_arpack=0)
-  evals : (OUT) array of size nev+1 which has the computed Ritz values
-  v     : orthonormal basis (schur vectors) of the eigenvectors. Size is ncv*ldv (ldv includes the communication buffer) spinors.
+  evals : (OUT) array of size nev+1 which has the computed nev Ritz values
+  v     : computed eigenvectors. Size is n*ncv spinors.
   tol    : Requested tolerance for the accuracy of the computed eigenvectors.
            A value of 0 means machine precision.
   maxiter: maximum number of restarts (iterations) allowed to be used by ARPACK
@@ -137,7 +137,9 @@ void evals_arpack(
    if(use_acc==2)
      iparam[0]=0;
 
-   iparam[1]=maxiter;iparam[3]=1;
+   iparam[2]=maxiter;
+
+   iparam[3]=1;
 
    iparam[6]=1;
 
@@ -146,29 +148,33 @@ void evals_arpack(
 
    _Complex double *workd  = (_Complex double *) alloc_aligned_mem(3*N*sizeof(_Complex double)); 
 
+   int lworkl=3*ncv*ncv+5*ncv;
+
+   _Complex double *workl=(_Complex double *) alloc_aligned_mem(lworkl*sizeof(_Complex double));
+
    double *rwork  = (double *) alloc_aligned_mem(  ncv*sizeof(double));
 
    unsigned int rvec=1; //always compute eigenvectors
 
-   char howmany='P';   //compute orthonormal basis (Schur vectors)
+   char howmany='A';   //compute orthonormal basis (Schur vectors)
 
-   spinor *zv; //this is for the eigenvectors and won't be referenced when howmany='P'
+   //spinor *zv; //this is for the eigenvectors and won't be referenced when howmany='P'
 
    int *select = (int *) malloc(ncv*sizeof(int)); //since all Ritz vectors or Schur vectors are computed no need to initialize this array
 
    _Complex double sigma;
     
    _Complex double *workev = (_Complex double *) alloc_aligned_mem(2*ncv*sizeof(_Complex double));
+   
+   double d1,d2,d3;
 
-   int lworkl = 3*ncv*ncv+5*ncv;   
-
-   if(init_resid_arpack==0)
+   //if(init_resid_arpack==0)
       (*info) = 0;                 //means use a random starting vector with Arnoldi
 
    spinor *vin   = (spinor *) alloc_aligned_mem(ldv*sizeof(spinor)); //input spinor 
    spinor *vout  = (spinor *) alloc_aligned_mem(ldv*sizeof(spinor)); //output spinor
 
-   int ierr,j;
+   int i,j;
 
 
 
@@ -187,8 +193,14 @@ void evals_arpack(
                   workl, &lworkl,rwork,info );
       #endif
       if ((ido==-1)||(ido==1)){
+
          assign(vin, (spinor *) workd+(ipntr[0]-1)/12,n);
-         av(vout,vin); 
+
+         if((use_acc==0) || (use_acc==2) )
+           av(vout,vin);
+         else 
+           cheb_poly_op(vout,vin,av,N,amin,amax,cheb_k);
+
          assign((spinor *) workd+(ipntr[1]-1)/12, vout, n);
       }
       
@@ -205,17 +217,17 @@ void evals_arpack(
      }
      else 
      { 
-        //compute eigenvectors if desired
+        //compute eigenvectors 
         #ifndef MPI
-        _FT(zneupd) (&rvec,&howmany, select,evals,zv,&N,&sigma, 
+        _FT(zneupd) (&rvec,&howmany, select,evals,v,&N,&sigma, 
                      workev,&bmat,&N,which_evals,&nev,&tol,resid,&ncv, 
                      v,&N,iparam,ipntr,workd,workl,&lworkl, 
-                     rwork,&ierr);
+                     rwork,&info);
         #else
-        _FT(pzneupd) (&comm,&rvec,&howmany, select,evals,zv,&N,&sigma, 
+        _FT(pzneupd) (&comm,&rvec,&howmany, select,evals,v,&N,&sigma, 
                      workev,&bmat,&N,which_evals,&nev,&tol,resid,&ncv, 
                      v,&N,iparam,ipntr,workd,workl,&lworkl, 
-                     rwork,&ierr);
+                     rwork,&info);
         #endif
 
         /*
@@ -231,10 +243,10 @@ void evals_arpack(
         %----------------------------------------------%
         */
 
-        if( ierr!=0) 
+        if( info!=0) 
         {
            if(g_proc_id == g_stdio_proc){
-             fprintf(stderr,"Error with _neupd, info = %d \n",ierr);
+             fprintf(stderr,"Error with _neupd, info = %d \n",info);
              fprintf(stderr,"Check the documentation of _neupd. \n");}
         }
         else //report eiegnvalues and their residuals
@@ -260,16 +272,19 @@ void evals_arpack(
                //compute the residual
                //IMPORTANT: our eigenvectors are of lattice size. In order to apply the Dirac operator
                //we need to copy them to a spinor with lattice size + buffer size needed for communications
-               //assign(workd+ldv,&v[j*n],n);
-               //av(workd,workd+ldv);
-               //assign_diff_mul(workd,&v[j*n], evals[j], n);
-               //rd[j*3]   = creal(evals[j]);
-               //rd[j*3+1] = cimag(evals[j]);
-               //rd[j*3+2] = sqrt(square_norm(workd,n,parallel));
-               //rd[j*3+2] = rd[j*3+2] /sqrt(square_norm(&v[j*n],n,parallel));
+               assign(vin,&v[j*n],n);
+               if((use_acc==0) || (use_acc==2))
+                 av(vout,vin);
+               else
+                 cheb_poly_op(vout,vin,av,N,amin,amax,cheb_k);
+
+               assign_diff_mul(vout,&v[j*n], evals[j], n);
+               
+               d1 = sqrt(square_norm(vout,n,parallel));
+               d2 = sqrt(square_norm(&v[j*n],n,parallel));
 
                if(g_proc_id == g_stdio_proc)
-                  fprintf(stdout,"RitzValue %d  %f  %f  error= %f %f\n",j,creal(*(workl+ipntr[8]+j)),cimag(*(workl+ipntr[8]+j)),creal(*(workl+ipntr[10]+j)),cimag(*(workl+ipntr[10]+j)));
+                  fprintf(stdout,"RitzValue %d  %+e  %+e  error= %+e \n",j,creal(evals[j]),cimag(evals[j]),d1/d2);
               }
         }
 

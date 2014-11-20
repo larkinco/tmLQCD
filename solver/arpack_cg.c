@@ -87,7 +87,19 @@ int arpack_cg(
   static _Complex double *evals,*H,*HU,*initwork;
   int *IPIV; 
   static int info_arpack=0;
-  static int ldh=0; //number of converged eigenvectors as returned by arpack
+  static int nconv_arpack=0; //number of converged eigenvectors as returned by arpack
+
+  int i,j;
+
+  int parallel;        /* for parallel processing of the scalar products */
+  #ifdef MPI
+    parallel=1;
+  #else
+    parallel=0;
+  #endif
+
+
+  _Complex double c1,c2;
 
   /* leading dimension for spinor vectors */
   int LDN;
@@ -96,24 +108,15 @@ int arpack_cg(
   else
      LDN = VOLUMEPLUSRAND/2; 
 
-  H        = (_Complex double*) alloc_aligned_mem(nev*nev*sizeof(_Complex double ));
-  HU       = (_Complex double*) alloc_aligned_mem(nev*nev*sizeof(_Complex double ));
-  IPIV     = (int *) alloc_aligned_mem(nev*sizeof(int));
-
-  int lworkl=3*ncv*ncv+5*ncv;
-
-  int i;
-
-  _Complex double *workl= (_Complex double *) alloc_aligned_mem(lworkl*sizeof(_Complex double)); 
-
   double et1,et2;  //timers for computing eigenvetors using arpack
+
   //before solving 
   if(ncurRHS==0){ 
     //call arpack
     et1=gettime();
     evals = (_Complex double *) alloc_aligned_mem(ncv*sizeof(_Complex double));
     evecs = (spinor *) alloc_aligned_mem(ncv*N*sizeof(spinor));
-    evals_arpack(N,nev,ncv,kind,acc,arpack_initresid,cheb_k,emin,emax,evals,evecs,workl,arpack_eig_tol,arpack_eig_maxiter,f,&info_arpack,&ldh);
+    evals_arpack(N,nev,ncv,kind,acc,arpack_initresid,cheb_k,emin,emax,evals,evecs,arpack_eig_tol,arpack_eig_maxiter,f,&info_arpack,&nconv_arpack);
     et2=gettime();
 
     if(info_arpack != 0){ //arpack didn't converge
@@ -123,26 +126,35 @@ int arpack_cg(
     
     if(info_arpack == 0){
       if(g_proc_id == g_stdio_proc)
-        fprintf(stdout,"WARNING: ARPACK has computed %d eigenvectors\n",ldh);
-      H        = (_Complex double*) alloc_aligned_mem(ldh*ldh*sizeof(_Complex double ));
-      HU       = (_Complex double*) alloc_aligned_mem(ldh*ldh*sizeof(_Complex double ));
-      IPIV     = (int *) alloc_aligned_mem(ldh*sizeof(int));
-      initwork = (_Complex double *) alloc_aligned_mem(ldh*sizeof(_Complex double));
+        fprintf(stdout,"WARNING: ARPACK has computed %d eigenvectors\n",nconv_arpack);
+      H        = (_Complex double*) alloc_aligned_mem(nconv_arpack*nconv_arpack*sizeof(_Complex double ));
+      HU       = (_Complex double*) alloc_aligned_mem(nconv_arpack*nconv_arpack*sizeof(_Complex double ));
+      IPIV     = (int *) alloc_aligned_mem(nconv_arpack*sizeof(int));
+      initwork = (_Complex double *) alloc_aligned_mem(nconv_arpack*sizeof(_Complex double));
       if(g_proc_id == g_stdio_proc)
         fprintf(stdout,"ARPACK time: %-f\n",et2-et1);
     }
     ax     = (spinor *) alloc_aligned_mem(LDN*sizeof(spinor));
     r      = (spinor *) alloc_aligned_mem(LDN*sizeof(spinor));
+
+    //compute the elements of the hermitian matrices H and HU
+    for(i=0; i<nconv_arpack; i++)
+    {
+
+       assign(r,&evecs[i*N],N);
+       f(ax,r);
+       for(j=i; j<nconv_arpack; j++)
+       {
+          c1 = scalar_prod(&evecs[j*N],ax,N,parallel);
+          H[j+nconv_arpack*i] = c1;
+          H[i+nconv_arpack*j] = conj(c1);
+          HU[j+nconv_arpack*i] = c1;
+          HU[i+nconv_arpack*j] = conj(c1);
+       }
+     }
   }
     
   double eps_sq_used,restart_eps_sq_used;  //tolerance squared for the linear system
-
-  int parallel;        /* for parallel processing of the scalar products */
-  #ifdef MPI
-    parallel=1;
-  #else
-    parallel=0;
-  #endif
 
   double cur_res; //current residual squared
 
@@ -205,7 +217,6 @@ int arpack_cg(
          is used for every right hand side.
       */
      
-      int tmpsize;
       int ONE=1;
       int info_lapack;
 
@@ -216,9 +227,7 @@ int arpack_cg(
       }
 
       /* solve the linear system H y = c */
-      tmpsize=nev;
-      _FT(zcopy) (&tmpsize,H,&ONE,HU,&ONE); /* copy H into HU */
-      _FT(zgesv) (&nev,&ONE,HU,&nev,IPIV,initwork,&nev,&info_lapack);
+      _FT(zgesv) (&nconv_arpack,&ONE,HU,&nconv_arpack,IPIV,initwork,&nconv_arpack,&info_lapack);
 
       if(info_lapack != 0)
       {
@@ -230,7 +239,7 @@ int arpack_cg(
       }
 
       /* x = x + evecs*inv(H)*evecs'*r */
-      for(i=0; i<nev; i++)
+      for(i=0; i<nconv_arpack; i++)
       {
         assign_add_mul(x,&evecs[i*N],initwork[i],N);
       }
