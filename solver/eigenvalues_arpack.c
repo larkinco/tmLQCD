@@ -203,8 +203,14 @@ void evals_arpack(
 
          assign((spinor *) workd+(ipntr[1]-1)/12, vout, n);
       }
+
+      if( (ido==3) & (iparam[0]==0)){ //provide implicit shifts as roots of the chebyshev polynoimial
+         cheb_poly_roots(&workl[ipntr[13]],iparam[7],amin,amax);
+      }
+
+
       
-   } while ((ido==-1)||(ido==1));
+   } while (ido != 99);
    
 /*
  Check for convergence 

@@ -35,7 +35,7 @@
 
 
 
-//ARPACK driver routines for computing eigenvectors (serial only) 
+//ARPACK driver routines for computing eigenvectors (serial version) 
 extern void _FT(znaupd) (int *ido, char *bmat, int *n, char *which, int *nev, double *tol,
                          _Complex double *resid, int *ncv, _Complex double *v, int *ldv, 
                          int *iparam, int *ipntr, _Complex double *workd, _Complex double *workl, 
@@ -47,7 +47,7 @@ extern void _FT(zneupd) (int *comp_evecs, char *cA, int *select, _Complex double
                          int *ncv, _Complex double *v1, int *ldv1, int *iparam, int *ipntr, 
                          _Complex double *workd, _Complex double *workl, int *lworkl, double *rwork, int *info);
 
-//PARPACK routines (parallel)
+//PARPACK routines (parallel version)
 #ifdef MPI
 extern void _FT(pznaupd) (MPI_Comm *comm, int *ido, char *bmat, int *n, char *which, int *nev, double *tol,
                          _Complex double *resid, int *ncv, _Complex double *v, int *ldv, 
