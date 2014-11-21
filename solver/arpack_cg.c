@@ -89,7 +89,7 @@ int arpack_cg(
   static int info_arpack=0;
   static int nconv_arpack=0; //number of converged eigenvectors as returned by arpack
 
-  int i,j;
+  int i,j,tmpsize;
 
   int parallel;        /* for parallel processing of the scalar products */
   #ifdef MPI
@@ -148,8 +148,6 @@ int arpack_cg(
           c1 = scalar_prod(&evecs[j*N],ax,N,parallel);
           H[j+nconv_arpack*i] = c1;
           H[i+nconv_arpack*j] = conj(c1);
-          HU[j+nconv_arpack*i] = c1;
-          HU[i+nconv_arpack*j] = conj(c1);
        }
      }
   }
@@ -227,6 +225,8 @@ int arpack_cg(
       }
 
       /* solve the linear system H y = c */
+      tmpsize=nconv_arpack*nconv_arpack;
+      _FT(zcopy) (&tmpsize,H,&ONE,HU,&ONE); /* copy H into HU */
       _FT(zgesv) (&nconv_arpack,&ONE,HU,&nconv_arpack,IPIV,initwork,&nconv_arpack,&info_lapack);
 
       if(info_lapack != 0)
