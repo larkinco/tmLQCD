@@ -135,8 +135,6 @@ int arpack_cg(
           c1 = scalar_prod(&evecs[j*N],ax,N,parallel);
           H[j+nconv_arpack*i] = c1;
           H[i+nconv_arpack*j] = conj(c1);   
-          HU[j+nconv_arpack*i] = c1;
-          HU[i+nconv_arpack*j] = conj(c1);
        }   
     }
 
@@ -144,6 +142,7 @@ int arpack_cg(
     
   double eps_sq_used,restart_eps_sq_used;  //tolerance squared for the linear system
 
+  int tmpsize=nconv_arpack*nconv_arpack;
 
   /*increment the RHS counter*/
   ncurRHS = ncurRHS +1; 
@@ -213,6 +212,7 @@ int arpack_cg(
          initwork[i]= scalar_prod(&evecs[i*N],r,N,parallel);
       }
 
+      _FT(zcopy) (&tmpsize,H,&ONE,HU,&ONE); /* copy H into HU */
       _FT(zgesv) (&nconv_arpack,&ONE,HU,&nconv_arpack,IPIV,initwork,&nconv_arpack,&info_lapack);
       if(info_lapack != 0)
       {
