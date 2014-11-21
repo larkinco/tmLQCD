@@ -199,7 +199,7 @@ void evals_arpack(
          if((use_acc==0) || (use_acc==2) )
            av(vout,vin);
          else 
-           cheb_poly_op(vout,vin,av,N,amin,amax,cheb_k);
+           cheb_poly_op(vout,vin,av,n,amin,amax,cheb_k);
 
          assign((spinor *) workd+(ipntr[1]-1)/12, vout, n);
       }
@@ -280,7 +280,7 @@ void evals_arpack(
                if((use_acc==0) || (use_acc==2))
                  av(vout,vin);
                else
-                 cheb_poly_op(vout,vin,av,N,amin,amax,cheb_k);
+                 cheb_poly_op(vout,vin,av,n,amin,amax,cheb_k);
 
                assign_diff_mul(vout,&v[j*n], evals[j], n);
                
