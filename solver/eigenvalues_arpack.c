@@ -217,7 +217,7 @@ void evals_arpack(int n, int nev, int ncv, char *which, _Complex double *evals, 
                rd[j*3+2] = rd[j*3+2] /sqrt(square_norm(&v[j*n],n,parallel));
 
                if(g_proc_id == g_stdio_proc)
-                  fprintf(stdout,"RitzValue %d  %f  %f  ||A*x-lambda*x||/||x||= %f\n",j,rd[j*3],rd[j*3+1],rd[j*3+2]);
+                  fprintf(stdout,"RitzValue %d  %+e  %+e  ||A*x-lambda*x||/||x||= %+e   arpack error = %+e \n",j,rd[j*3],rd[j*3+1],rd[j*3+2],cabs(*(workl+ipntr[10]-1+j)));
               }
         }
 
