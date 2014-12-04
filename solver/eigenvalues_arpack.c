@@ -119,8 +119,12 @@ void evals_arpack(
    char *which_evals;
 
    if(which==0)
+     which_evals="SR";
+   if(which==1)
+     which_evals="LR";
+   if(which==2)
      which_evals="SM";
-   else
+   if(which==3)
      which_evals="LM";
 
 
