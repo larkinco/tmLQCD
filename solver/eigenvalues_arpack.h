@@ -20,6 +20,7 @@
 #include "memalloc.h"
 #include "solver/precon.h"
 
+//evals_arpack(N,nev,ncv,kind,acc,cheb_k,emin,emax,evals,evecs,arpack_eig_tol,arpack_eig_maxiter,f,&info_arpack,&nconv,arpack_logfile);
 
 /*compute nev eigenvectors using ARPACK and PARPACK*/
 void evals_arpack(
@@ -28,17 +29,17 @@ void evals_arpack(
   int ncv, 
   int which,
   int use_acc,
-  int init_resid_arpack,
   int cheb_k,
   double amin,
   double amax,
   _Complex double *evals, 
-  spinor *v,
+  _Complex double *v,
   double tol, 
   int maxiter, 
   matrix_mult av, 
   int *info, 
-  int *nconv);
+  int *nconv,
+  char *arpack_logfile);
 /*
   compute nev eigenvectors using ARPACK and PARPACK
   n     : (IN) size of the local lattice
@@ -46,16 +47,15 @@ void evals_arpack(
   ncv   : (IN) size of the subspace used to compute eigenvectors (nev+1) =< ncv < 12*n
           where 12n is the size of the matrix under consideration
   which : (IN) which eigenvectors to compute. Choices are:
-          0: smallest magnitude
-          1: largest magintude
+          0: smallest real part "SR"
+          1: largest real part "LR"
+          2: smallest absolute value "SM"
+          3: largest absolute value "LM"
+          4: smallest imaginary part "SI"
+          5: largest imaginary part "LI"
   use_acc: (IN) specify the polynomial acceleration mode
                 0 no acceleration
                 1 use acceleration by computing the eigenvectors of a shifted-normalized chebyshev polynomial
-                2 use acceleration by using the roots of Chebyshev polynomial as shifts
-  init_resid_arpack: (IN) specify the initial residual passed to arpack for computing eigenvectors
-                          0 arpack uses a random intiial vector
-                          1 provide a starting vector for arpack which is obtained by chebyshev
-                            polynomial in order to enhance the components of the requested eiegenvectors
   cheb_k   : (IN) degree of the chebyshev polynomial to be used for acceleration (irrelevant when use_acc=0 and init_resid_arpack=0)
   amin,amax: (IN) bounds of the interval [amin,amax] for the acceleration polynomial (irrelevant when use_acc=0 and init_resid_arpack=0)
   evals : (OUT) array of size nev+1 which has the computed nev Ritz values
@@ -68,6 +68,7 @@ void evals_arpack(
   info   : output from arpack. 0 means that it converged to the desired tolerance. 
            otherwise, an error message is printed to stderr 
   nconv  : actual number of converged eigenvectors.
+  arpack_logfile: name for the logfile to be used by arpack
 */ 
 
 #endif

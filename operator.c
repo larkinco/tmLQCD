@@ -137,6 +137,8 @@ int add_operator(const int type) {
    (optr->solver_params).arpackcg_nev=0;           
    (optr->solver_params).arpackcg_ncv=0;          
    (optr->solver_params).arpackcg_evals_kind=0;          
+   (optr->solver_params).arpackcg_comp_evecs=0;          
+   strncpy((optr->solver_params).arpack_logfile,"default_arpack_log.dat",300);          
    (optr->solver_params).arpackcg_eig_tol=0.0;       
    (optr->solver_params).arpackcg_eig_maxiter=0;   
    

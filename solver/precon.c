@@ -11,10 +11,8 @@
 #include "solver/precon.h"
 
 
-void cheb_poly_op(spinor * const R, spinor * const S, matrix_mult f, const int N, const double a, const double b, const int k)
+void cheb_poly_op(spinor * const R, spinor * const S, matrix_mult f, const int N, const double a, const double b, const int k, spinor *v1, spinor *v2)
 {
-   static int initp=0;
-   static spinor *v1,*v2;
 
    double delta,theta;
    double sigma,sigma1,sigma_old;
@@ -59,15 +57,6 @@ void cheb_poly_op(spinor * const R, spinor * const S, matrix_mult f, const int N
       LDN = VOLUMEPLUSRAND;
    else
       LDN = VOLUMEPLUSRAND/2;
-
-   //allocate needed memory
-   if(initp==0)
-   {
-       v1 = (spinor *) alloc_aligned_mem(LDN*sizeof(spinor));
-       v2 = (spinor *) alloc_aligned_mem(LDN*sizeof(spinor));
-       initp=1;
-   }
-
 
    assign(v1,S,N);
    assign(v2,R,N);

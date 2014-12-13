@@ -18,7 +18,7 @@
 #include "memalloc.h"
 #include "start.h"
 
-void cheb_poly_op(spinor * const R, spinor * const S, matrix_mult f, const int N, const double a, const double b, const int k);
+void cheb_poly_op(spinor * const R, spinor * const S, matrix_mult f, const int N, const double a, const double b, const int k, spinor *v1, spinor *v2);
 /*
  Chebyshev polynomial of the oprator f in the interval [a,b] normalized to 1 at 0.
  R: output spinor
@@ -26,6 +26,7 @@ void cheb_poly_op(spinor * const R, spinor * const S, matrix_mult f, const int N
  f: matrix-vector multiplication for the operator
  a,b: limits of the interval with b>a
  k: degree of the polynomial
+ v1 and v2 are spinors needed to be used in the recurrence relation
 */
 
 

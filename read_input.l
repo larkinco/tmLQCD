@@ -101,6 +101,7 @@ inline void rmQuotes(char *str){
   float cs;
   int reread = 0;
   char name[100];
+  char fname[500];
   char * type;
 
   int verbose = 0;
@@ -641,10 +642,15 @@ inline void rmQuotes(char *str){
     (optr->solver_params).use_acc = a;
     if(myverbose) printf("  ARPACK polynomial acceleration mode set to  %d line %d operator %d\n", a, line_of_file, current_operator);
   }
-  {SPC}*ARPACKInitResid{EQL}{DIGIT}+ {
+  {SPC}*ARPACKCompEvecs{EQL}{DIGIT}+ {
     sscanf(yytext, " %[a-zA-Z] = %d", name, &a);
-    (optr->solver_params).arpack_init_resid = a;
-    if(myverbose) printf("  ARPACK_init_resid option is set to  %d line %d operator %d\n", a, line_of_file, current_operator);
+    (optr->solver_params).arpackcg_comp_evecs = a;
+    if(myverbose) printf("  ARPACK compute evecs option set to   %d line %d operator %d\n", a, line_of_file, current_operator);
+  }
+  {SPC}*ARPACKLogFile{EQL}{FILENAME}+ {
+    sscanf(yytext, " %[a-zA-Z] = %s", name, fname);
+    strncpy( (optr->solver_params).arpack_logfile, fname, 200) ;
+    if(myverbose) printf("  ARPACK logfile name is  set to %s line %d operator %d\n", fname, line_of_file, current_operator);
   }
   {SPC}*EVminHPD{EQL}{FLT} {
     sscanf(yytext, " %[a-zA-Z1] = %lf", name, &c);

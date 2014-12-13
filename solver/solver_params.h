@@ -63,24 +63,25 @@ typedef struct {
    int    arpackcg_nev;           /*Number of eigenvectors to be computed by arpack*/
    int    arpackcg_ncv;           /*Size of the subspace used by arpack with the condition (nev+1) =< ncv */
    int    arpackcg_evals_kind;    /* type of eigenvalues to be computed 
-                                     0 eigenvalues of smallest magnitude
-                                     1 eigenvalues of largest magnitude */
+                                     0 eigenvalues of smallest real part
+                                     1 eigenvalues of largest real part 
+                                     2 eigenvalues of smallest absolute value
+                                     3 eigenvalues of largest absolute value*/
+   int    arpackcg_comp_evecs;    /* 0 don't compute the resiudals of the eigenvalues
+                                     1 compute the residulas of the eigenvalues*/
    double arpackcg_eig_tol;       /*Tolerance for computing eigenvalues with arpack */
    int    arpackcg_eig_maxiter;   /*Maximum number of iterations to be used by arpack*/
+   char   arpack_logfile[500];    /*file name for the logfile used by arpack*/
 
   /*************************************
    *chebychev polynomila preconditioner
    *for CG related paprameters
    *************************************/
    int use_acc; //type of acceleration to be used: 
-                //0 no acceleration, 1 compute eiegnvectors of the acceleration polynomial, 
-                //2 use roots of the chebyshev polynomial as shifts (polynomial not computed explicitly)  
+                //0 no acceleration, 1 compute eiegnvectors of the acceleration polynomial,   
    int cheb_k; //order of the polynomial used is k+1 and the lowest value is k=-1 which correspond to T_0
-   double op_evmin;  //some estimate of the lowest eigenvalue
-   double op_evmax;  //some estimate of the largest eigenvalue
-   int arpack_init_resid; //0 means start with a random vector that arpack produces internally
-                          //1 means pass a preconditioned initial vector T_k(A)v where v is 
-                          // a random vector and T_k(A) is the acceleration polynomial
+   double op_evmin;  /*lowest boundary of the interval for the polynomial acceleration*/
+   double op_evmax;  /*highest boundary for the interval for the polynomial acceleration*/
    
    
 } solver_params_t;

@@ -43,6 +43,31 @@ int poly_precon_cg_her(spinor * const P, spinor * const Q, const int max_iter,
   spinor ** solver_field = NULL;
   const int nr_sf = 5;
 
+  int LDV;
+  if(N==VOLUME)
+    LDV = VOLUMEPLUSRAND;
+  else
+    LDV = VOLUMEPLUSRAND/2;
+
+  spinor *_tmps1,*_tmps2;   //spinors that might be needed
+  spinor *tmps1,*tmps2;   //spinors that might be needed
+
+  #if (defined SSE || defined SSE2 || defined SSE3)
+  _tmps1 = calloc(LDV+1,sizeof(spinor));
+  tmps1  = (spinor *) ( ((unsigned long int)(_tmps1)+ALIGN_BASE)&~ALIGN_BASE);
+  _tmps2 = calloc(LDV+1,sizeof(spinor));
+  tmps2  = (spinor *) ( ((unsigned long int)(_tmps1)+ALIGN_BASE)&~ALIGN_BASE);
+  #else
+  tmps1 = (spinor *) calloc(LDV,sizeof(spinor));
+  tmps2 = (spinor *) calloc(LDV,sizeof(spinor));
+  #endif
+
+
+
+
+
+
+
   if(N == VOLUME) {
     init_solver_field(&solver_field, VOLUMEPLUSRAND, nr_sf);
   }
@@ -70,7 +95,7 @@ int poly_precon_cg_her(spinor * const P, spinor * const Q, const int max_iter,
     diff(solver_field[1], solver_field[3], solver_field[2], N);
   }
   /* z0 = M^-1 r0 */
-  cheb_poly_op(solver_field[3], solver_field[1],f,N,evmin,evmax,cheb_k);
+  cheb_poly_op(solver_field[3], solver_field[1],f,N,evmin,evmax,cheb_k,tmps1,tmps2);
   //invert_eigenvalue_part(solver_field[3], solver_field[1], 10, N);
   /* p0 = z0 */
   assign(solver_field[2], solver_field[3], N);
@@ -114,7 +139,7 @@ int poly_precon_cg_her(spinor * const P, spinor * const Q, const int max_iter,
     /* z_j */
     beta_cg = 1/pro2;
     /* z_(j+1) = M^-1 r_(j+1) */
-    cheb_poly_op(solver_field[3], solver_field[1],f,N,evmin,evmax,cheb_k);
+    cheb_poly_op(solver_field[3], solver_field[1],f,N,evmin,evmax,cheb_k,tmps1,tmps2);
 /*     invert_eigenvalue_part(solver_field[3], solver_field[1], 10, N); */
     /* Compute beta_cg(i+1)
        Compute p_(i+1) = r_i+1 + beta_(i+1) p_i     */

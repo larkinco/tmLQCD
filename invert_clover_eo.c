@@ -106,7 +106,8 @@ int invert_clover_eo(spinor * const Even_new, spinor * const Odd_new,
        iter = arpack_cg(VOLUME/2,solver_params.arpackcg_nrhs,solver_params.arpackcg_nrhs1, Odd_new, g_spinor_field[DUM_DERI],Qsq,
                         solver_params.arpackcg_eps_sq1,precision,solver_params.arpackcg_res_eps_sq,rel_prec,max_iter,
                         solver_params.arpackcg_nev,solver_params.arpackcg_ncv,solver_params.arpackcg_eig_tol,solver_params.arpackcg_eig_maxiter,
-                        solver_params.arpackcg_evals_kind,solver_params.use_acc,solver_params.cheb_k,solver_params.op_evmin,solver_params.op_evmax,solver_params.arpack_init_resid);
+                        solver_params.arpackcg_evals_kind,solver_params.arpackcg_comp_evecs,solver_params.use_acc,
+                        solver_params.cheb_k,solver_params.op_evmin,solver_params.op_evmax,solver_params.arpack_logfile);
 
        Qm(Odd_new, Odd_new);
     }
