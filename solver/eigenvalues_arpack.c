@@ -260,7 +260,7 @@ void evals_arpack(
    #endif
 
 
-   if((_x == NULL) || (x==NULL) || (_ax==NULL) || (ax==NULL) ){
+   if((x==NULL) || (ax==NULL) || (tmps1==NULL) || (tmps2==NULL)){
        if(g_proc_id == g_stdio_proc)
        { fprintf(stderr,"Error: not enough memory [2] in eigenvalues_arpack.\n"); fflush(stderr); exit(1);}
    }
