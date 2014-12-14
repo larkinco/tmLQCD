@@ -35,40 +35,40 @@
 
 
 //ARPACK initlog and finilog routines for printing the ARPACK log (same for serial and parallel version)
-extern void _FT(initlog) (int*, char*, int);
-extern void _FT(finilog) (int*);
+extern void _AFT(initlog) (int*, char*, int);
+extern void _AFT(finilog) (int*);
 
 
 //ARPACK driver routines for computing eigenvectors (serial version) 
-extern void _FT(znaupd) (int *ido, char *bmat, int *n, char *which, int *nev, double *tol,
+extern void _AFT(znaupd) (int *ido, char *bmat, int *n, char *which, int *nev, double *tol,
                          _Complex double *resid, int *ncv, _Complex double *v, int *ldv, 
                          int *iparam, int *ipntr, _Complex double *workd, _Complex double *workl, 
                          int *lworkl, double *rwork, int *info, int bmat_size, int which_size );
 			
-extern void _FT(zneupd) (int *comp_evecs, char *howmany, int *select, _Complex double *evals, 
+extern void _AFT(zneupd) (int *comp_evecs, char *howmany, int *select, _Complex double *evals, 
 			 _Complex double *v, int *ldv, _Complex double *sigma, _Complex double *workev, 
 			 char *bmat, int *n, char *which, int *nev, double *tol, _Complex double *resid, 
                          int *ncv, _Complex double *v1, int *ldv1, int *iparam, int *ipntr, 
                          _Complex double *workd, _Complex double *workl, int *lworkl, double *rwork, int *info,
                          int howmany_size, int bmat_size, int which_size);
 
-extern void _FT(mcinitdebug)(int*,int*,int*,int*,int*,int*,int*,int*);
+extern void _AFT(mcinitdebug)(int*,int*,int*,int*,int*,int*,int*,int*);
 
 //PARPACK routines (parallel version)
 #ifdef MPI
-extern void _FT(pznaupd) (int *comm, int *ido, char *bmat, int *n, char *which, int *nev, double *tol,
+extern void _AFT(pznaupd) (int *comm, int *ido, char *bmat, int *n, char *which, int *nev, double *tol,
                          _Complex double *resid, int *ncv, _Complex double *v, int *ldv, 
                          int *iparam, int *ipntr, _Complex double *workd, _Complex double *workl, 
                          int *lworkl, double *rwork, int *info, int bmat_size, int which_size );
 
-extern void _FT(pzneupd) (int *comm, int *comp_evecs, char *howmany, int *select, _Complex double *evals, 
+extern void _AFT(pzneupd) (int *comm, int *comp_evecs, char *howmany, int *select, _Complex double *evals, 
                          _Complex double *v, int *ldv, _Complex double *sigma, _Complex double *workev, 
                          char *bmat, int *n, char *which, int *nev, double *tol, _Complex double *resid, 
                          int *ncv, _Complex double *v1, int *ldv1, int *iparam, int *ipntr, 
                          _Complex double *workd, _Complex double *workl, int *lworkl, double *rwork, int *info,
                          int howmany_size, int bmat_size, int which_size);
 
-extern void _FT(pmcinitdebug)(int*,int*,int*,int*,int*,int*,int*,int*);
+extern void _AFT(pmcinitdebug)(int*,int*,int*,int*,int*,int*,int*,int*);
 #endif
 
 #endif

@@ -115,7 +115,7 @@ void evals_arpack(
    int ido=0;           //control of the action taken by reverse communications
                         //set initially to zero
 
-   char *bmat= "I";     /* Specifies that the right hand side matrix
+   char *bmat[]= "I";     /* Specifies that the right hand side matrix
                           should be the identity matrix; this makes
                           the problem a standard eigenvalue problem.
                        */
@@ -184,7 +184,7 @@ void evals_arpack(
 
 
 
-   int *iparam = (int *) malloc(11*sizeof(int));
+   int *iparam = (int *) calloc(11,sizeof(int));
    if(iparam == NULL){
        if(g_proc_id == g_stdio_proc)
        { fprintf(stderr,"Error: not enough memory for iparam in eigenvalues_arpack.\n"); fflush(stderr); exit(1);}
@@ -200,11 +200,11 @@ void evals_arpack(
    iparam[6]=1;
 
 
-   int *ipntr  = (int *) malloc(14*sizeof(int));
+   int *ipntr  = (int *) calloc(14,sizeof(int));
 
    _Complex double *workd  = (_Complex double *) calloc(3*N,sizeof(_Complex double)); 
 
-   int lworkl=3*ncv*ncv+5*ncv+N; //just allocate more space
+   int lworkl=(3*ncv*ncv+5*ncv)*2; //just allocate more space
 
    _Complex double *workl=(_Complex double *) calloc(lworkl,sizeof(_Complex double));
 
@@ -212,11 +212,11 @@ void evals_arpack(
 
    int rvec=1; //always call the subroutine that computes orthonormal bais for the eigenvectors
 
-   char howmany='P';   //always compute orthonormal basis
+   char *howmany[]="P";   //always compute orthonormal basis
 
    _Complex double *zv; //this is for the eigenvectors and won't be referenced when howmany='P', otherwise it hase to be allocated
 
-   if(howmany == 'A'){
+   if(strcmp(howmany,"A")==0){
      zv = (_Complex double *) calloc(nev*N,sizeof(_Complex double));
      if(zv == NULL){
        if(g_proc_id == g_stdio_proc)
@@ -224,7 +224,7 @@ void evals_arpack(
      }
    } 
 
-   int *select = (int *) malloc(ncv*sizeof(int)); //since all Ritz vectors or Schur vectors are computed no need to initialize this array
+   int *select = (int *) calloc(ncv,sizeof(int)); //since all Ritz vectors or Schur vectors are computed no need to initialize this array
 
    _Complex double sigma;
     
@@ -276,12 +276,12 @@ void evals_arpack(
    if ( NULL != arpack_logfile ) {
      /* correctness of this code depends on alignment in Fortran and C 
 	being the same ; if you observe crashes, disable this part */
-     _FT(initlog)(&arpack_log_u, arpack_logfile, strlen(arpack_logfile));
+     _AFT(initlog)(&arpack_log_u, arpack_logfile, strlen(arpack_logfile));
      int msglvl0 = 0,
        msglvl1 = 1,
        msglvl2 = 2,
        msglvl3 = 3;
-     _FT(mcinitdebug)(
+     _AFT(mcinitdebug)(
 		  &arpack_log_u,      /*logfil*/
 		  &msglvl3,           /*mcaupd*/
 		  &msglvl3,           /*mcaup2*/
@@ -304,12 +304,12 @@ void evals_arpack(
 	&& (g_proc_id == g_stdio_proc) ) {
      /* correctness of this code depends on alignment in Fortran and C 
 	being the same ; if you observe crashes, disable this part */
-     _FT(initlog)(&arpack_log_u, arpack_logfile, strlen(arpack_logfile));
+     _AFT(initlog)(&arpack_log_u, arpack_logfile, strlen(arpack_logfile));
      int msglvl0 = 0,
        msglvl1 = 1,
        msglvl2 = 2,
        msglvl3 = 3;
-     _FT(pmcinitdebug)(
+     _AFT(pmcinitdebug)(
 		   &arpack_log_u,      /*logfil*/
 		   &msglvl3,           /*mcaupd*/
 		   &msglvl3,           /*mcaup2*/
@@ -336,11 +336,11 @@ void evals_arpack(
    do
    {
       #ifndef MPI 
-      _FT(znaupd)(&ido, bmat, &N, which_evals, &nev, &tol,resid, &ncv,
+      _AFT(znaupd)(&ido, bmat, &N, which_evals, &nev, &tol,resid, &ncv,
                   v, &N, iparam, ipntr, workd, 
                   workl, &lworkl,rwork,info,1,2);
       #else
-      _FT(pznaupd)(&mpi_comm_f, &ido, bmat, &N, which_evals, &nev, &tol, resid, &ncv,
+      _AFT(pznaupd)(&mpi_comm_f, &ido, bmat, &N, which_evals, &nev, &tol, resid, &ncv,
                    v, &N, iparam, ipntr, workd, 
                    workl, &lworkl,rwork,info,1,2);
       #endif
@@ -377,12 +377,12 @@ void evals_arpack(
 
         //compute eigenvectors 
         #ifndef MPI
-        _FT(zneupd) (&rvec,&howmany, select,evals,zv,&N,&sigma, 
+        _AFT(zneupd) (&rvec,howmany, select,evals,zv,&N,&sigma, 
                      workev,bmat,&N,which_evals,&nev,&tol,resid,&ncv, 
                      v,&N,iparam,ipntr,workd,workl,&lworkl, 
                      rwork,info,1,1,2);
         #else
-        _FT(pzneupd) (&mpi_comm_f,&rvec,&howmany, select,evals, zv,&N,&sigma, 
+        _AFT(pzneupd) (&mpi_comm_f,&rvec,howmany, select,evals, zv,&N,&sigma, 
                      workev,bmat,&N,which_evals,&nev,&tol, resid,&ncv, 
                      v,&N,iparam,ipntr,workd,workl,&lworkl, 
                      rwork,info,1,1,2);
@@ -446,14 +446,37 @@ void evals_arpack(
 
 #ifndef MPI
      if (NULL != arpack_logfile)
-       _FT(finilog)(&arpack_log_u);
+       _AFT(finilog)(&arpack_log_u);
 #else
      if(g_proc_id == g_stdio_proc){
        if (NULL != arpack_logfile){
-	 _FT(finilog)(&arpack_log_u);
+	 _AFT(finilog)(&arpack_log_u);
        }
      }
 #endif     
+
+
+     //free memory
+     if(resid != NULL) free(resid);
+     if(iparam != NULL) free(iparam);
+     if(ipntr != NULL) free(ipntr);
+     if(workd != NULL) free(workd);
+     if(zv != NULL) free(zv);
+     if(select != NULL) free(select);
+     if(workev != NULL) free(workev);
+     if(_x != NULL) free(_x);
+     if(x != NULL) free(x);
+     if(_ax != NULL) free(_ax);
+     if(ax != NULL) free(ax);
+     if(_r != NULL) free(_r);
+     if(r != NULL) free(r);
+     if(_tmps1 != NULL) free(_tmps1);
+     if(tmps1 != NULL) free(tmps1);
+     if(_tmps2 != NULL) free(_tmps2);
+     if(tmps2 != NULL) free(tmps2);
+
+
+
 
      return;
 }

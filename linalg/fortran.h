@@ -25,4 +25,7 @@
 #define _FT(s) s ## _
 #endif
 
+#define _AFT(s) s
+
+
 #endif
