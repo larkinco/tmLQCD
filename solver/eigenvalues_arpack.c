@@ -295,60 +295,60 @@ void evals_arpack(
    //const char *arpack_logfile;
    int arpack_log_u = 9999;
 
-#ifndef MPI
-   //sprintf(arpack_logfile,"ARPACK_output.log");
-   if ( NULL != arpack_logfile ) {
-     /* correctness of this code depends on alignment in Fortran and C 
-	being the same ; if you observe crashes, disable this part */
-     _AFT(initlog)(&arpack_log_u, arpack_logfile, strlen(arpack_logfile));
-     int msglvl0 = 0,
-       msglvl1 = 1,
-       msglvl2 = 2,
-       msglvl3 = 3;
-     _AFT(mcinitdebug)(
-		  &arpack_log_u,      /*logfil*/
-		  &msglvl3,           /*mcaupd*/
-		  &msglvl3,           /*mcaup2*/
-		  &msglvl0,           /*mcaitr*/
-		  &msglvl3,           /*mceigh*/
-		  &msglvl0,           /*mcapps*/
-		  &msglvl0,           /*mcgets*/
-		  &msglvl3            /*mceupd*/);
-     
-     fprintf(stdout,"*** ARPACK verbosity set to mcaup2=3 mcaupd=3 mceupd=3; \n"
-	     "*** output is directed to '%s';\n"
-	     "*** if you don't see output, your memory may be corrupted\n",
-	     arpack_logfile);
-   }
-#else
-   //if( g_proc_id == g_stdio_proc ){
-   //  sprintf(arpack_logfile,"ARPACK_output.log");
-   //}
-   if ( NULL != arpack_logfile 
-	&& (g_proc_id == g_stdio_proc) ) {
-     /* correctness of this code depends on alignment in Fortran and C 
-	being the same ; if you observe crashes, disable this part */
-     _AFT(initlog)(&arpack_log_u, arpack_logfile, strlen(arpack_logfile));
-     int msglvl0 = 0,
-       msglvl1 = 1,
-       msglvl2 = 2,
-       msglvl3 = 3;
-     _AFT(pmcinitdebug)(
-		   &arpack_log_u,      /*logfil*/
-		   &msglvl3,           /*mcaupd*/
-		   &msglvl3,           /*mcaup2*/
-		   &msglvl0,           /*mcaitr*/
-		   &msglvl3,           /*mceigh*/
-		   &msglvl0,           /*mcapps*/
-		   &msglvl0,           /*mcgets*/
-		   &msglvl3            /*mceupd*/);
-     
-     fprintf(stdout,"*** ARPACK verbosity set to mcaup2=3 mcaupd=3 mceupd=3; \n"
-	    "*** output is directed to '%s';\n"
-	    "*** if you don't see output, your memory may be corrupted\n",
-	    arpack_logfile);
-   }
-#endif   
+//#ifndef MPI
+//   //sprintf(arpack_logfile,"ARPACK_output.log");
+//   if ( NULL != arpack_logfile ) {
+//     /* correctness of this code depends on alignment in Fortran and C 
+//	being the same ; if you observe crashes, disable this part */
+//     _AFT(initlog)(&arpack_log_u, arpack_logfile, strlen(arpack_logfile));
+//     int msglvl0 = 0,
+//       msglvl1 = 1,
+//       msglvl2 = 2,
+//       msglvl3 = 3;
+//     _AFT(mcinitdebug)(
+//		  &arpack_log_u,      /*logfil*/
+//		  &msglvl3,           /*mcaupd*/
+//		  &msglvl3,           /*mcaup2*/
+//		  &msglvl0,           /*mcaitr*/
+//		  &msglvl3,           /*mceigh*/
+//		  &msglvl0,           /*mcapps*/
+//		  &msglvl0,           /*mcgets*/
+//		  &msglvl3            /*mceupd*/);
+//     
+//     fprintf(stdout,"*** ARPACK verbosity set to mcaup2=3 mcaupd=3 mceupd=3; \n"
+//	     "*** output is directed to '%s';\n"
+//	     "*** if you don't see output, your memory may be corrupted\n",
+//	     arpack_logfile);
+//  }
+//#else
+//   //if( g_proc_id == g_stdio_proc ){
+//   //  sprintf(arpack_logfile,"ARPACK_output.log");
+//   //}
+//   if ( NULL != arpack_logfile 
+//	&& (g_proc_id == g_stdio_proc) ) {
+//     /* correctness of this code depends on alignment in Fortran and C 
+//	being the same ; if you observe crashes, disable this part */
+//     _AFT(initlog)(&arpack_log_u, arpack_logfile, strlen(arpack_logfile));
+//     int msglvl0 = 0,
+//       msglvl1 = 1,
+//       msglvl2 = 2,
+//       msglvl3 = 3;
+//     _AFT(pmcinitdebug)(
+//		   &arpack_log_u,      /*logfil*/
+//		   &msglvl3,           /*mcaupd*/
+//		   &msglvl3,           /*mcaup2*/
+//		   &msglvl0,           /*mcaitr*/
+//		   &msglvl3,           /*mceigh*/
+//		   &msglvl0,           /*mcapps*/
+//		   &msglvl0,           /*mcgets*/
+//		   &msglvl3            /*mceupd*/);
+//    
+//     fprintf(stdout,"*** ARPACK verbosity set to mcaup2=3 mcaupd=3 mceupd=3; \n"
+//	    "*** output is directed to '%s';\n"
+//	    "*** if you don't see output, your memory may be corrupted\n",
+//	    arpack_logfile);
+//   }
+//#endif   
 
 
 
@@ -487,16 +487,16 @@ void evals_arpack(
      }  //if(info < 0) else part
 
 
-#ifndef MPI
-     if (NULL != arpack_logfile)
-       _AFT(finilog)(&arpack_log_u);
-#else
-     if(g_proc_id == g_stdio_proc){
-       if (NULL != arpack_logfile){
-	 _AFT(finilog)(&arpack_log_u);
-       }
-     }
-#endif     
+//#ifndef MPI
+//     if (NULL != arpack_logfile)
+//       _AFT(finilog)(&arpack_log_u);
+//#else
+//     if(g_proc_id == g_stdio_proc){
+//       if (NULL != arpack_logfile){
+//	 _AFT(finilog)(&arpack_log_u);
+//       }
+//     }
+//#endif     
 
 
      //free memory
