@@ -85,12 +85,12 @@ int arpack_cg(
 
   //Static variables and arrays.
   static int ncurRHS=0;                  /* current number of the system being solved */                   
-  static void *_ax=NULL,*_r=NULL,*_tmps1=NULL,*_tmps2=NULL;                  
-  static spinor *ax=NULL,*r=NULL,*tmps1=NULL,*tmps2=NULL;                  
-  static _Complex double *evecs=NULL,*evals=NULL,*H=NULL,*HU=NULL,*Hinv=NULL,*initwork=NULL,*tmpv1=NULL;
-  static _Complex double *zheev_work=NULL;
-  static double *hevals=NULL,*zheev_rwork=NULL;
-  static int *IPIV=NULL; 
+  static void *_ax,*_r,*_tmps1,*_tmps2;                  
+  static spinor *ax,*r,*tmps1,*tmps2;                  
+  static _Complex double *evecs,*evals,*H,*HU,*Hinv,*initwork,*tmpv1;
+  static _Complex double *zheev_work;
+  static double *hevals,*zheev_rwork;
+  static int *IPIV; 
   static int info_arpack=0;
   static int nconv=0; //number of converged eigenvectors as returned by arpack
   int i,j,tmpsize;
@@ -121,24 +121,64 @@ int arpack_cg(
   //-------------------------------------------------------------*/ 
   if(ncurRHS==0){ 
     #if (defined SSE || defined SSE2 || defined SSE3)
-    _ax = calloc(LDN+1,sizeof(spinor));
-    ax  = (spinor *) ( ((unsigned long int)(_ax)+ALIGN_BASE)&~ALIGN_BASE);
-    _r = calloc(LDN+1,sizeof(spinor));
-    r  = (spinor *) ( ((unsigned long int)(_r)+ALIGN_BASE)&~ALIGN_BASE);
-    _tmps1 = calloc(LDN+1,sizeof(spinor));
-    tmps1  = (spinor *) ( ((unsigned long int)(_tmps1)+ALIGN_BASE)&~ALIGN_BASE);
-    _tmps2 = calloc(LDN+1,sizeof(spinor));
-    tmps2  = (spinor *) ( ((unsigned long int)(_tmps2)+ALIGN_BASE)&~ALIGN_BASE);
+    _ax = malloc((LDN+ALIGN_BASE)*sizeof(spinor));
+    if(_ax==NULL)
+    {
+       if(g_proc_id == g_stdio_proc)
+          fprintf(stderr,"insufficient memory for _ax inside arpack_cg.\n");
+       exit(1);
+    }
+    else
+       {ax  = (spinor *) ( ((unsigned long int)(_ax)+ALIGN_BASE)&~ALIGN_BASE);}
+
+    _r = malloc((LDN+ALIGN_BASE)*sizeof(spinor));
+    if(_r==NULL)
+    {
+       if(g_proc_id == g_stdio_proc)
+          fprintf(stderr,"insufficient memory for _r inside arpack_cg.\n");
+       exit(1);
+    }
+    else
+       {r  = (spinor *) ( ((unsigned long int)(_r)+ALIGN_BASE)&~ALIGN_BASE);}
+
+    _tmps1 = malloc((LDN+ALIGN_BASE)*sizeof(spinor));
+    if(_tmps1==NULL)
+    {
+       if(g_proc_id == g_stdio_proc)
+          fprintf(stderr,"insufficient memory for _tmps1 inside arpack_cg.\n");
+       exit(1);
+    }
+    else
+       {tmps1  = (spinor *) ( ((unsigned long int)(_tmps1)+ALIGN_BASE)&~ALIGN_BASE);}
+
+    _tmps2 = malloc((LDN+ALIGN_BASE)*sizeof(spinor));
+    if(_tmps2==NULL)
+    {
+       if(g_proc_id == g_stdio_proc)
+          fprintf(stderr,"insufficient memory for _tmps2 inside arpack_cg.\n");
+       exit(1);
+    }
+    else
+       {tmps2  = (spinor *) ( ((unsigned long int)(_tmps2)+ALIGN_BASE)&~ALIGN_BASE);}
+
     #else
-    ax = (spinor *) calloc(LDN,sizeof(spinor));
-    r  = (spinor *) calloc(LDN,sizeof(spinor));
-    tmps1 = (spinor *) calloc(LDN,sizeof(spinor));
-    tmps2 = (spinor *) calloc(LDN,sizeof(spinor));
+    ax = (spinor *) malloc(LDN*sizeof(spinor));
+    r  = (spinor *) malloc(LDN*sizeof(spinor));
+    tmps1 = (spinor *) malloc(LDN*sizeof(spinor));
+    tmps2 = (spinor *) malloc(LDN*sizeof(spinor));
+    
+    if( (ax == NULL)  || (r==NULL) || (tmps1==NULL) || (tmps2==NULL) )
+    {
+       if(g_proc_id == g_stdio_proc)
+          fprintf(stderr,"insufficient memory for ax,r,tmps1,tmps2 inside arpack_cg.\n");
+       exit(1);
+    }
     #endif
 
-    evecs = (_Complex double *) calloc(ncv*12*N,sizeof(_Complex double)); //note: no extra buffer 
-    evals = (_Complex double *) calloc(ncv,sizeof(_Complex double)); 
-    tmpv1 = (_Complex double *) calloc(12*N,sizeof(_Complex double));
+
+    evecs = (_Complex double *) malloc(ncv*12*N*sizeof(_Complex double)); //note: no extra buffer 
+    evals = (_Complex double *) malloc(ncv*sizeof(_Complex double)); 
+    tmpv1 = (_Complex double *) malloc(12*N*sizeof(_Complex double));
 
     if((evecs == NULL)  || (evals==NULL) || (tmpv1==NULL))
     {
@@ -146,17 +186,6 @@ int arpack_cg(
           fprintf(stderr,"insufficient memory for evecs and evals inside arpack_cg.\n");
        exit(1);
     }
-
-
-    if((ax == NULL)  || (r==NULL) || (tmps1==NULL) || (tmps2==NULL) )
-    {
-       if(g_proc_id == g_stdio_proc)
-          fprintf(stderr,"insufficient memory for ax, r, tmps1, tmps2 inside arpack_cg.\n");
-       exit(1);
-    }
-
-
-
 
 
     et1=gettime();
@@ -176,17 +205,15 @@ int arpack_cg(
        fprintf(stdout,"ARPACK time: %+e\n",et2-et1);
     }
 
-    H        = (_Complex double *) calloc(nconv*nconv,sizeof(_Complex double)); 
-    HU       = (_Complex double *) calloc(nconv*nconv,sizeof(_Complex double)); 
-    Hinv     = (_Complex double *) calloc(nconv*nconv,sizeof(_Complex double)); 
-    initwork = (_Complex double *) calloc(nconv,sizeof(_Complex double)); 
-    IPIV     = (int *) calloc(nconv,sizeof(int));
+    H        = (_Complex double *) malloc(nconv*nconv*sizeof(_Complex double)); 
+    HU       = (_Complex double *) malloc(nconv*nconv*sizeof(_Complex double)); 
+    Hinv     = (_Complex double *) malloc(nconv*nconv*sizeof(_Complex double)); 
+    initwork = (_Complex double *) malloc(nconv*sizeof(_Complex double)); 
+    IPIV     = (int *) malloc(nconv*sizeof(int));
     zheev_lwork = 3*nconv;
-    zheev_work  = (_Complex double *) calloc(zheev_lwork,sizeof(_Complex double));
-    zheev_rwork = (double *) calloc(3*nconv,sizeof(double));
-    hevals      = (double *) calloc(nconv,sizeof(double));
-
-
+    zheev_work  = (_Complex double *) malloc(zheev_lwork*sizeof(_Complex double));
+    zheev_rwork = (double *) malloc(3*nconv*sizeof(double));
+    hevals      = (double *) malloc(nconv*sizeof(double));
 
     if((H==NULL) || (HU==NULL) || (Hinv==NULL) || (initwork==NULL) || (IPIV==NULL) || (zheev_lwork==NULL) || (zheev_rwork==NULL) || (hevals==NULL))
     {
@@ -417,25 +444,14 @@ int arpack_cg(
 
   //free memory if this was your last system to solve
   if(ncurRHS == nrhs){
-    if(_ax != NULL) free(_ax);  
-    if(_r != NULL) free(_r);  
-    if(_tmps1 != NULL) free(_tmps1); 
-    if(_tmps2 != NULL) free(_tmps2);
-    if(ax != NULL) free(ax);
-    if(r != NULL) free(r);
-    if(tmps1 != NULL) free(tmps1);
-    if(tmps2 != NULL) free(tmps2);
-    if(evecs != NULL) free(evecs);
-    if(evals != NULL) free(evals);
-    if(H != NULL) free(H);
-    if(HU != NULL) free(HU);
-    if(Hinv != NULL) free(Hinv);
-    if(initwork != NULL) free(initwork);
-    if(tmpv1 != NULL) free(tmpv1);
-    if(zheev_work != NULL) free(zheev_work);
-    if(hevals != NULL) free(hevals);
-    if(zheev_rwork != NULL) free(zheev_rwork);
-    if(IPIV != NULL) free(IPIV);
+    #if ( (defined SSE) || (defined SSE2) || (defined SSE3)) 
+    free(_ax);  free(_r);  free(_tmps1); free(_tmps2);
+    #else
+    free(ax); free(r); free(tmps1); free(tmps2);
+    #endif
+    free(evecs); free(evals); free(H); free(HU); free(Hinv);
+    free(initwork); free(tmpv1); free(zheev_work);
+    free(hevals); free(zheev_rwork); free(IPIV);
   }
 
 

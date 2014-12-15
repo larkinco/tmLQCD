@@ -115,10 +115,10 @@ void evals_arpack(
    int ido=0;           //control of the action taken by reverse communications
                         //set initially to zero
 
-   char *bmat[]= "I";     /* Specifies that the right hand side matrix
-                          should be the identity matrix; this makes
-                          the problem a standard eigenvalue problem.
-                       */
+   char *bmat=strdup("I");     /* Specifies that the right hand side matrix
+                                  should be the identity matrix; this makes
+                                  the problem a standard eigenvalue problem.
+                               */
 
    //matrix dimensions 
    int ldv,N,LDV;
@@ -133,27 +133,20 @@ void evals_arpack(
    LDV=12*ldv;   //leading dimension (including communication buffers)
    
 
-   char SR[]="SR";
-   char LR[]="LR";
-   char SM[]="SM";
-   char LM[]="LM";
-   char SI[]="SI";
-   char LI[]="LI";
-
    char *which_evals;
 
    if(which==0)
-     which_evals=SR;
+     which_evals=strdup("SR");
    if(which==1)
-     which_evals=LR;
+     which_evals=strdup("LR");
    if(which==2)
-     which_evals=SM;
+     which_evals=strdup("SM");
    if(which==3)
-     which_evals=LM;
+     which_evals=strdup("LM");
    if(which==4)
-     which_evals=SI;
+     which_evals=strdup("SI");
    if(which==5)
-     which_evals=LI;
+     which_evals=strdup("LI");
 
 
     //check
@@ -166,25 +159,28 @@ void evals_arpack(
             && strcmp("LM", which_evals)))
     {
         if(g_proc_id == g_stdio_proc)
-          {fprintf(stderr,"Error: invalid value for which_evals\n"); exit(1);}
+          {fprintf(stderr,"Error: invalid value for which_evals\n"); fflush(stderr); exit(1);}
     }
 
    //check input
-   if(nev>=N) nev=N-1;
-   if(ncv < (nev+1)) ncv = nev+1;
-
-   _Complex double *resid  = (_Complex double *) calloc(N,sizeof(_Complex double));
-   if(resid == NULL){
+   if(nev>=N){
        if(g_proc_id == g_stdio_proc)
+          {fprintf(stderr,"number of eigenvalues requested should be less than the size of the matrix.\n"); fflush(stderr); exit(1);}
+   }
+
+   if(ncv < (nev+1)){
+       if(g_proc_id == g_stdio_proc)
+          {fprintf(stderr,"search subspace must be larger than the number of requested eiegnvalues.\n"); fflush(stderr); exit(1);}
+   }
+
+   _Complex double *resid  = (_Complex double *) malloc(N*sizeof(_Complex double));
+   if(resid == NULL){
+    if(g_proc_id == g_stdio_proc)
        { fprintf(stderr,"Error: not enough memory for resid in eigenvalues_arpack.\n"); fflush(stderr); exit(1);}
    }
 
 
-
-
-
-
-   int *iparam = (int *) calloc(11,sizeof(int));
+   int *iparam = (int *) malloc(11*sizeof(int));
    if(iparam == NULL){
        if(g_proc_id == g_stdio_proc)
        { fprintf(stderr,"Error: not enough memory for iparam in eigenvalues_arpack.\n"); fflush(stderr); exit(1);}
@@ -200,39 +196,39 @@ void evals_arpack(
    iparam[6]=1;
 
 
-   int *ipntr  = (int *) calloc(14,sizeof(int));
+   int *ipntr  = (int *) malloc(14*sizeof(int));
 
-   _Complex double *workd  = (_Complex double *) calloc(3*N,sizeof(_Complex double)); 
+   _Complex double *workd  = (_Complex double *) malloc(3*N*sizeof(_Complex double)); 
 
    int lworkl=(3*ncv*ncv+5*ncv)*2; //just allocate more space
 
-   _Complex double *workl=(_Complex double *) calloc(lworkl,sizeof(_Complex double));
+   _Complex double *workl=(_Complex double *) malloc(lworkl*sizeof(_Complex double));
 
-   double *rwork  = (double *) calloc(ncv,sizeof(double));
+   double *rwork  = (double *) malloc(ncv*sizeof(double));
 
-   int rvec=1; //always call the subroutine that computes orthonormal bais for the eigenvectors
+   int rvec=1;       //always call the subroutine that computes orthonormal bais for the eigenvectors
 
-   char *howmany[]="P";   //always compute orthonormal basis
+   char *howmany=strdup("P");   //always compute orthonormal basis
 
    _Complex double *zv; //this is for the eigenvectors and won't be referenced when howmany='P', otherwise it hase to be allocated
 
-   if(strcmp(howmany,"A")==0){
-     zv = (_Complex double *) calloc(nev*N,sizeof(_Complex double));
-     if(zv == NULL){
-       if(g_proc_id == g_stdio_proc)
-       { fprintf(stderr,"Error: not enough memory for zv in eigenvalues_arpack.\n"); fflush(stderr); exit(1);}
-     }
-   } 
+   //if(strcmp(howmany,"A")==0){
+   //  zv = (_Complex double *) malloc(nev*N*sizeof(_Complex double));
+   //  if(zv == NULL){
+   //    if(g_proc_id == g_stdio_proc)
+   //    { fprintf(stderr,"Error: not enough memory for zv in eigenvalues_arpack.\n"); fflush(stderr); exit(1);}
+   //  }
+   //} 
 
-   int *select = (int *) calloc(ncv,sizeof(int)); //since all Ritz vectors or Schur vectors are computed no need to initialize this array
+   int *select = (int *) malloc(ncv*sizeof(int)); //since all Ritz vectors or Schur vectors are computed no need to initialize this array
 
    _Complex double sigma;
     
-   _Complex double *workev = (_Complex double *) calloc(2*ncv,sizeof(_Complex double));
+   _Complex double *workev = (_Complex double *) malloc(2*ncv*sizeof(_Complex double));
 
    if((ipntr == NULL) || (workd==NULL) || (workl==NULL) || (rwork==NULL) || (select==NULL) || (workev==NULL)){
        if(g_proc_id == g_stdio_proc)
-       { fprintf(stderr,"Error: not enough memory [1] in eigenvalues_arpack.\n"); fflush(stderr); exit(1);}
+       { fprintf(stderr,"Error: not enough memory for ipntr,workd,workl,rwork,select,workev in eigenvalues_arpack.\n"); fflush(stderr); exit(1);}
    }
 
    double d1,d2,d3;
@@ -240,30 +236,58 @@ void evals_arpack(
    
    (*info) = 0;                 //means use a random starting vector with Arnoldi
 
-   spinor *_x,*_ax,*_r,*_tmps1,*_tmps2;   //spinors that might be needed
-   spinor *x,*ax,*r,*tmps1,*tmps2;   //spinors that might be needed
+   void *_x,*_ax,*_r,*_tmps1,*_tmps2;   //spinors that might be needed
+   spinor *x,*ax,*r,*tmps1,*tmps2;      //spinors that might be needed
 
    #if (defined SSE || defined SSE2 || defined SSE3)
-   _x = calloc(ldv+1,sizeof(spinor));
-   x  = (spinor *) ( ((unsigned long int)(_x)+ALIGN_BASE)&~ALIGN_BASE);
-   _ax = calloc(ldv+1,sizeof(spinor));
-   ax  = (spinor *) ( ((unsigned long int)(_ax)+ALIGN_BASE)&~ALIGN_BASE);
-   _tmps1 = calloc(ldv+1,sizeof(spinor));
-   tmps1  = (spinor *) ( ((unsigned long int)(_tmps1)+ALIGN_BASE)&~ALIGN_BASE);
-   _tmps2 = calloc(ldv+1,sizeof(spinor));
-   tmps2  = (spinor *) ( ((unsigned long int)(_tmps1)+ALIGN_BASE)&~ALIGN_BASE);
+   _x = malloc((ldv+ALIGN_BASE)*sizeof(spinor));
+   if(_x==NULL){
+       if(g_proc_id == g_stdio_proc)
+       { fprintf(stderr,"Error: not enough memory for _x in eigenvalues_arpack.\n"); fflush(stderr); exit(1);}
+   }
+   else
+      x  = (spinor *) ( ((unsigned long int)(_x)+ALIGN_BASE)&~ALIGN_BASE);
+
+
+   _ax = malloc((ldv+ALIGN_BASE)*sizeof(spinor));
+   if(_ax==NULL){
+       if(g_proc_id == g_stdio_proc)
+       { fprintf(stderr,"Error: not enough memory for _ax in eigenvalues_arpack.\n"); fflush(stderr); exit(1);}
+   }
+   else
+     ax  = (spinor *) ( ((unsigned long int)(_ax)+ALIGN_BASE)&~ALIGN_BASE);
+
+
+   _tmps1 = malloc((ldv+ALIGN_BASE)*sizeof(spinor));
+   if(_tmps1==NULL){
+       if(g_proc_id == g_stdio_proc)
+       { fprintf(stderr,"Error: not enough memory for _tmps1 in eigenvalues_arpack.\n"); fflush(stderr); exit(1);}
+   }
+   else
+     tmps1  = (spinor *) ( ((unsigned long int)(_tmps1)+ALIGN_BASE)&~ALIGN_BASE);
+
+
+   _tmps2 = malloc((ldv+ALIGN_BASE)*sizeof(spinor));
+   if(_tmps2==NULL){
+       if(g_proc_id == g_stdio_proc)
+       { fprintf(stderr,"Error: not enough memory for _tmps2 in eigenvalues_arpack.\n"); fflush(stderr); exit(1);}
+   }
+   else
+     tmps2  = (spinor *) ( ((unsigned long int)(_tmps2)+ALIGN_BASE)&~ALIGN_BASE);
+
+
    #else
+
    x  = (spinor *) calloc(ldv,sizeof(spinor));
    ax = (spinor *) calloc(ldv,sizeof(spinor));
-   tmps1 = (spinor *) calloc(ldv,sizeof(spinor));
+   tmps1  = (spinor *) calloc(ldv,sizeof(spinor));
    tmps2 = (spinor *) calloc(ldv,sizeof(spinor));
-   #endif
-
-
    if((x==NULL) || (ax==NULL) || (tmps1==NULL) || (tmps2==NULL)){
        if(g_proc_id == g_stdio_proc)
-       { fprintf(stderr,"Error: not enough memory [2] in eigenvalues_arpack.\n"); fflush(stderr); exit(1);}
+       { fprintf(stderr,"Error: not enough memory in x, ax, tmps1, tmps2 in eigenvalues_arpack.\n"); fflush(stderr); exit(1);}
    }
+
+   #endif
 
    int i,j;
 
@@ -335,9 +359,16 @@ void evals_arpack(
 
    do
    {
+
+
+   //extern void _AFT(znaupd) (int *ido, char *bmat, int *n, char *which, int *nev, double *tol,
+   //                      _Complex double *resid, int *ncv, _Complex double *v, int *ldv, 
+   //                      int *iparam, int *ipntr, _Complex double *workd, _Complex double *workl, 
+   //                      int *lworkl, double *rwork, int *info, int bmat_size, int which_size );
+
       #ifndef MPI 
       _AFT(znaupd)(&ido, bmat, &N, which_evals, &nev, &tol,resid, &ncv,
-                  v, &N, iparam, ipntr, workd, 
+                   v, &N, iparam, ipntr, workd, 
                   workl, &lworkl,rwork,info,1,2);
       #else
       _AFT(pznaupd)(&mpi_comm_f, &ido, bmat, &N, which_evals, &nev, &tol, resid, &ncv,
@@ -375,6 +406,18 @@ void evals_arpack(
         if(g_proc_id == g_stdio_proc){
           fprintf(stderr,"number of converged eigenvectors = %d\n", *nconv);}
 
+//extern void _AFT(pzneupd) (int *comm, int *comp_evecs, char *howmany, int *select, _Complex double *evals, 
+//                         _Complex double *v, int *ldv, _Complex double *sigma, _Complex double *workev, 
+//                         char *bmat, int *n, char *which, int *nev, double *tol, _Complex double *resid, 
+//                         int *ncv, _Complex double *v1, int *ldv1, int *iparam, int *ipntr, 
+//                         _Complex double *workd, _Complex double *workl, int *lworkl, double *rwork, int *info,
+//                         int howmany_size, int bmat_size, int which_size);
+
+
+
+
+
+
         //compute eigenvectors 
         #ifndef MPI
         _AFT(zneupd) (&rvec,howmany, select,evals,zv,&N,&sigma, 
@@ -383,9 +426,9 @@ void evals_arpack(
                      rwork,info,1,1,2);
         #else
         _AFT(pzneupd) (&mpi_comm_f,&rvec,howmany, select,evals, zv,&N,&sigma, 
-                     workev,bmat,&N,which_evals,&nev,&tol, resid,&ncv, 
-                     v,&N,iparam,ipntr,workd,workl,&lworkl, 
-                     rwork,info,1,1,2);
+                       workev,bmat,&N,which_evals,&nev,&tol, resid,&ncv, 
+                       v,&N,iparam,ipntr,workd,workl,&lworkl, 
+                       rwork,info,1,1,2);
         #endif
 
 
@@ -457,26 +500,19 @@ void evals_arpack(
 
 
      //free memory
-     if(resid != NULL) free(resid);
-     if(iparam != NULL) free(iparam);
-     if(ipntr != NULL) free(ipntr);
-     if(workd != NULL) free(workd);
-     if(zv != NULL) free(zv);
-     if(select != NULL) free(select);
-     if(workev != NULL) free(workev);
-     if(_x != NULL) free(_x);
-     if(x != NULL) free(x);
-     if(_ax != NULL) free(_ax);
-     if(ax != NULL) free(ax);
-     if(_r != NULL) free(_r);
-     if(r != NULL) free(r);
-     if(_tmps1 != NULL) free(_tmps1);
-     if(tmps1 != NULL) free(tmps1);
-     if(_tmps2 != NULL) free(_tmps2);
-     if(tmps2 != NULL) free(tmps2);
-
-
-
+     free(resid);
+     free(iparam);
+     free(ipntr);
+     free(workd);
+     //free(zv);
+     free(select);
+     free(workev);
+     #if ( (defined SSE) || (defined SSE2) || (defined SSE3) )
+     free(_x); free(_ax); free(_r); free(_tmps1); free(_tmps2);
+     #else
+     free(_x); free(_ax); free(_r); free(_tmps1); free(_tmps2);
+     free(x); free(ax); free(r); free(tmps1); free(tmps2);
+     #endif
 
      return;
 }
