@@ -210,16 +210,6 @@ void evals_arpack(
 
    char *howmany=strdup("P");   //always compute orthonormal basis
 
-   _Complex double *zv; //this is for the eigenvectors and won't be referenced when howmany='P', otherwise it hase to be allocated
-
-   //if(strcmp(howmany,"A")==0){
-   //  zv = (_Complex double *) malloc(nev*N*sizeof(_Complex double));
-   //  if(zv == NULL){
-   //    if(g_proc_id == g_stdio_proc)
-   //    { fprintf(stderr,"Error: not enough memory for zv in eigenvalues_arpack.\n"); fflush(stderr); exit(1);}
-   //  }
-   //} 
-
    int *select = (int *) malloc(ncv*sizeof(int)); //since all Ritz vectors or Schur vectors are computed no need to initialize this array
 
    _Complex double sigma;
@@ -295,60 +285,60 @@ void evals_arpack(
    //const char *arpack_logfile;
    int arpack_log_u = 9999;
 
-//#ifndef MPI
-//   //sprintf(arpack_logfile,"ARPACK_output.log");
-//   if ( NULL != arpack_logfile ) {
-//     /* correctness of this code depends on alignment in Fortran and C 
-//	being the same ; if you observe crashes, disable this part */
-//     _AFT(initlog)(&arpack_log_u, arpack_logfile, strlen(arpack_logfile));
-//     int msglvl0 = 0,
-//       msglvl1 = 1,
-//       msglvl2 = 2,
-//       msglvl3 = 3;
-//     _AFT(mcinitdebug)(
-//		  &arpack_log_u,      /*logfil*/
-//		  &msglvl3,           /*mcaupd*/
-//		  &msglvl3,           /*mcaup2*/
-//		  &msglvl0,           /*mcaitr*/
-//		  &msglvl3,           /*mceigh*/
-//		  &msglvl0,           /*mcapps*/
-//		  &msglvl0,           /*mcgets*/
-//		  &msglvl3            /*mceupd*/);
-//     
-//     fprintf(stdout,"*** ARPACK verbosity set to mcaup2=3 mcaupd=3 mceupd=3; \n"
-//	     "*** output is directed to '%s';\n"
-//	     "*** if you don't see output, your memory may be corrupted\n",
-//	     arpack_logfile);
-//  }
-//#else
-//   //if( g_proc_id == g_stdio_proc ){
-//   //  sprintf(arpack_logfile,"ARPACK_output.log");
-//   //}
-//   if ( NULL != arpack_logfile 
-//	&& (g_proc_id == g_stdio_proc) ) {
-//     /* correctness of this code depends on alignment in Fortran and C 
-//	being the same ; if you observe crashes, disable this part */
-//     _AFT(initlog)(&arpack_log_u, arpack_logfile, strlen(arpack_logfile));
-//     int msglvl0 = 0,
-//       msglvl1 = 1,
-//       msglvl2 = 2,
-//       msglvl3 = 3;
-//     _AFT(pmcinitdebug)(
-//		   &arpack_log_u,      /*logfil*/
-//		   &msglvl3,           /*mcaupd*/
-//		   &msglvl3,           /*mcaup2*/
-//		   &msglvl0,           /*mcaitr*/
-//		   &msglvl3,           /*mceigh*/
-//		   &msglvl0,           /*mcapps*/
-//		   &msglvl0,           /*mcgets*/
-//		   &msglvl3            /*mceupd*/);
-//    
-//     fprintf(stdout,"*** ARPACK verbosity set to mcaup2=3 mcaupd=3 mceupd=3; \n"
-//	    "*** output is directed to '%s';\n"
-//	    "*** if you don't see output, your memory may be corrupted\n",
-//	    arpack_logfile);
-//   }
-//#endif   
+#ifndef MPI
+   //sprintf(arpack_logfile,"ARPACK_output.log");
+   if ( NULL != arpack_logfile ) {
+     /* correctness of this code depends on alignment in Fortran and C 
+	being the same ; if you observe crashes, disable this part */
+     _AFT(initlog)(&arpack_log_u, arpack_logfile, strlen(arpack_logfile));
+     int msglvl0 = 0,
+       msglvl1 = 1,
+       msglvl2 = 2,
+       msglvl3 = 3;
+     _AFT(mcinitdebug)(
+		  &arpack_log_u,      /*logfil*/
+		  &msglvl3,           /*mcaupd*/
+		  &msglvl3,           /*mcaup2*/
+		  &msglvl0,           /*mcaitr*/
+		  &msglvl3,           /*mceigh*/
+		  &msglvl0,           /*mcapps*/
+		  &msglvl0,           /*mcgets*/
+		  &msglvl3            /*mceupd*/);
+     
+     fprintf(stdout,"*** ARPACK verbosity set to mcaup2=3 mcaupd=3 mceupd=3; \n"
+	     "*** output is directed to '%s';\n"
+	     "*** if you don't see output, your memory may be corrupted\n",
+	     arpack_logfile);
+  }
+#else
+   //if( g_proc_id == g_stdio_proc ){
+   //  sprintf(arpack_logfile,"ARPACK_output.log");
+   //}
+   if ( NULL != arpack_logfile 
+	&& (g_proc_id == g_stdio_proc) ) {
+     /* correctness of this code depends on alignment in Fortran and C 
+	being the same ; if you observe crashes, disable this part */
+     _AFT(initlog)(&arpack_log_u, arpack_logfile, strlen(arpack_logfile));
+     int msglvl0 = 0,
+       msglvl1 = 1,
+       msglvl2 = 2,
+       msglvl3 = 3;
+     _AFT(pmcinitdebug)(
+		   &arpack_log_u,      /*logfil*/
+		   &msglvl3,           /*mcaupd*/
+		   &msglvl3,           /*mcaup2*/
+		   &msglvl0,           /*mcaitr*/
+		   &msglvl3,           /*mceigh*/
+		   &msglvl0,           /*mcapps*/
+		   &msglvl0,           /*mcgets*/
+		   &msglvl3            /*mceupd*/);
+    
+     fprintf(stdout,"*** ARPACK verbosity set to mcaup2=3 mcaupd=3 mceupd=3; \n"
+	    "*** output is directed to '%s';\n"
+	    "*** if you don't see output, your memory may be corrupted\n",
+	    arpack_logfile);
+   }
+#endif   
 
 
 
@@ -360,18 +350,12 @@ void evals_arpack(
    do
    {
 
-
-   //extern void _AFT(znaupd) (int *ido, char *bmat, int *n, char *which, int *nev, double *tol,
-   //                      _Complex double *resid, int *ncv, _Complex double *v, int *ldv, 
-   //                      int *iparam, int *ipntr, _Complex double *workd, _Complex double *workl, 
-   //                      int *lworkl, double *rwork, int *info, int bmat_size, int which_size );
-
       #ifndef MPI 
-      _AFT(znaupd)(&ido, bmat, &N, which_evals, &nev, &tol,resid, &ncv,
+      _AFT(znaupd)(&ido,"I", &N, which_evals, &nev, &tol,resid, &ncv,
                    v, &N, iparam, ipntr, workd, 
                   workl, &lworkl,rwork,info,1,2);
       #else
-      _AFT(pznaupd)(&mpi_comm_f, &ido, bmat, &N, which_evals, &nev, &tol, resid, &ncv,
+      _AFT(pznaupd)(&mpi_comm_f, &ido,"I", &N, which_evals, &nev, &tol, resid, &ncv,
                    v, &N, iparam, ipntr, workd, 
                    workl, &lworkl,rwork,info,1,2);
       #endif
@@ -406,27 +390,15 @@ void evals_arpack(
         if(g_proc_id == g_stdio_proc){
           fprintf(stderr,"number of converged eigenvectors = %d\n", *nconv);}
 
-//extern void _AFT(pzneupd) (int *comm, int *comp_evecs, char *howmany, int *select, _Complex double *evals, 
-//                         _Complex double *v, int *ldv, _Complex double *sigma, _Complex double *workev, 
-//                         char *bmat, int *n, char *which, int *nev, double *tol, _Complex double *resid, 
-//                         int *ncv, _Complex double *v1, int *ldv1, int *iparam, int *ipntr, 
-//                         _Complex double *workd, _Complex double *workl, int *lworkl, double *rwork, int *info,
-//                         int howmany_size, int bmat_size, int which_size);
-
-
-
-
-
-
         //compute eigenvectors 
         #ifndef MPI
-        _AFT(zneupd) (&rvec,howmany, select,evals,zv,&N,&sigma, 
-                     workev,bmat,&N,which_evals,&nev,&tol,resid,&ncv, 
+        _AFT(zneupd) (&rvec,"P", select,evals,v,&N,&sigma, 
+                     workev,"I",&N,which_evals,&nev,&tol,resid,&ncv, 
                      v,&N,iparam,ipntr,workd,workl,&lworkl, 
                      rwork,info,1,1,2);
         #else
-        _AFT(pzneupd) (&mpi_comm_f,&rvec,howmany, select,evals, zv,&N,&sigma, 
-                       workev,bmat,&N,which_evals,&nev,&tol, resid,&ncv, 
+        _AFT(pzneupd) (&mpi_comm_f,&rvec,"P", select,evals, v,&N,&sigma, 
+                       workev,"I",&N,which_evals,&nev,&tol, resid,&ncv, 
                        v,&N,iparam,ipntr,workd,workl,&lworkl, 
                        rwork,info,1,1,2);
         #endif
@@ -487,16 +459,16 @@ void evals_arpack(
      }  //if(info < 0) else part
 
 
-//#ifndef MPI
-//     if (NULL != arpack_logfile)
-//       _AFT(finilog)(&arpack_log_u);
-//#else
-//     if(g_proc_id == g_stdio_proc){
-//       if (NULL != arpack_logfile){
-//	 _AFT(finilog)(&arpack_log_u);
-//       }
-//     }
-//#endif     
+#ifndef MPI
+     if (NULL != arpack_logfile)
+       _AFT(finilog)(&arpack_log_u);
+#else
+     if(g_proc_id == g_stdio_proc){
+       if (NULL != arpack_logfile){
+	 _AFT(finilog)(&arpack_log_u);
+       }
+     }
+#endif     
 
 
      //free memory
