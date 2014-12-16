@@ -24,7 +24,7 @@
 #include "global.h"
 #include "linalg_eo.h"
 #include "start.h"
-#include "qsort.h"
+#include "quicksort.h"
 #include "linalg/blas.h"
 #include "linalg/lapack.h"
 #include "solver/eigenvalues_arpack.h"
