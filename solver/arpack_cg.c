@@ -411,7 +411,7 @@ int arpack_cg(
        if(g_proc_id == g_stdio_proc) {
          fprintf(stderr, "CG didn't converge within the maximum number of iterations in arpack_cg. Exiting...\n"); 
          fflush(stderr);
-         return -1;
+         exit(1);
          
        }
     } 
