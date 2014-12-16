@@ -427,7 +427,7 @@ void evals_arpack(
                /* print out the computed ritz values and their error estimates */
                if(g_proc_id == g_stdio_proc)
                   fprintf(stdout,"RitzValue[%06d]  %+e  %+e  error= %+e \n",j,creal(evals[j]),cimag(evals[j]),cabs(*(workl+ipntr[10]-1+j)));
-
+               sorted_evals_index[j] = j;
                sorted_evals[j] = cabs(evals[j]);
              }
 
