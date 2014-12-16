@@ -24,6 +24,7 @@
 #include "global.h"
 #include "linalg_eo.h"
 #include "start.h"
+#include "qsort.h"
 #include "linalg/blas.h"
 #include "linalg/lapack.h"
 #include "solver/eigenvalues_arpack.h"
@@ -216,9 +217,12 @@ void evals_arpack(
     
    _Complex double *workev = (_Complex double *) malloc(2*ncv*sizeof(_Complex double));
 
-   if((ipntr == NULL) || (workd==NULL) || (workl==NULL) || (rwork==NULL) || (select==NULL) || (workev==NULL)){
+   double *sorted_evals = (double *) malloc(ncv*sizeof(double)); //will be used to sort the eigenvalues
+   int *sorted_evals_index = (int *) malloc(ncv*sizeof(int)); 
+
+   if((ipntr == NULL) || (workd==NULL) || (workl==NULL) || (rwork==NULL) || (select==NULL) || (workev==NULL) || (sorted_evals==NULL) || (sorted_evals_index==NULL)){
        if(g_proc_id == g_stdio_proc)
-       { fprintf(stderr,"Error: not enough memory for ipntr,workd,workl,rwork,select,workev in eigenvalues_arpack.\n"); fflush(stderr); exit(1);}
+       { fprintf(stderr,"Error: not enough memory for ipntr,workd,workl,rwork,select,workev,sorted_evals,sorted_evals_index in eigenvalues_arpack.\n"); fflush(stderr); exit(1);}
    }
 
    double d1,d2,d3;
@@ -423,7 +427,24 @@ void evals_arpack(
                /* print out the computed ritz values and their error estimates */
                if(g_proc_id == g_stdio_proc)
                   fprintf(stdout,"RitzValue[%06d]  %+e  %+e  error= %+e \n",j,creal(evals[j]),cimag(evals[j]),cabs(*(workl+ipntr[10]-1+j)));
-              }
+
+               sorted_evals[j] = cabs(evals[j]);
+             }
+
+             //SORT THE EIGENVALUES in ascending order based on their absolute value
+             quicksort((*nconv),sorted_evals,sorted_evals_index);
+             //Print sorted evals
+             if(g_proc_id == g_stdio_proc)
+                fprintf(stdout,"Sorted eigenvalues based on their absolute values\n");
+
+             for(j=0; j< (*nconv); j++)
+             {
+               /* print out the computed ritz values and their error estimates */
+               if(g_proc_id == g_stdio_proc)
+                  fprintf(stdout,"RitzValue[%06d]  %+e  %+e  error= %+e \n",j,creal(evals[sorted_evals_index[j]]),cimag(evals[sorted_evals_index[j]]),cabs(*(workl+ipntr[10]-1+sorted_evals_index[j])));
+
+             }
+
         }
 
         /*Print additional convergence information.*/
