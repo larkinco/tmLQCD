@@ -43,7 +43,6 @@
 #include "solver_field.h"
 #include "solver/arpack_cg.h"
 
-
 int arpack_cg(
 
      //solver params
@@ -77,8 +76,8 @@ int arpack_cg(
      int acc,                       /*(IN) 0 no polynomial acceleration
                                            1 use polynomial acceleration*/
      int cheb_k,                    /*(IN) degree of the Chebyshev polynomial (irrelevant if acc=0)*/
-     int emin,                      /*(IN) lower end of the interval where the acceleration will be used (irrelevant if acc=0)*/
-     int emax,                      /*(IN) upper end of the interval where the acceleration will be used (irrelevant if acc=0)*/
+     double emin,                      /*(IN) lower end of the interval where the acceleration will be used (irrelevant if acc=0)*/
+     double emax,                      /*(IN) upper end of the interval where the acceleration will be used (irrelevant if acc=0)*/
      char *arpack_logfile           /*(IN) file name to be used for printing out debugging information from arpack*/
      )
 { 

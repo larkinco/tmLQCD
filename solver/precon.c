@@ -18,6 +18,7 @@ void cheb_poly_op(spinor * const R, spinor * const S, matrix_mult f, const int N
    double sigma,sigma1,sigma_old;
    double d1,d2,d3;
 
+
    if(k < 0){ //check the order of the requested polynomial
       if(g_proc_id == g_stdio_proc)
         fprintf(stderr,"Error: lowest allowed order of the Chebyshev polynomial is 0.\n");
