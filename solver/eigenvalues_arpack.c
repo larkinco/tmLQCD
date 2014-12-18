@@ -503,7 +503,6 @@ void evals_arpack(
      #if ( (defined SSE) || (defined SSE2) || (defined SSE3) )
      free(_x); free(_ax); free(_r); free(_tmps1); free(_tmps2);
      #else
-     free(_x); free(_ax); free(_r); free(_tmps1); free(_tmps2);
      free(x); free(ax); free(r); free(tmps1); free(tmps2);
      #endif
 
