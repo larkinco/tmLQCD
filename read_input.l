@@ -649,7 +649,7 @@ inline void rmQuotes(char *str){
   }
   {SPC}*ARPACKLogFile{EQL}{FILENAME}+ {
     sscanf(yytext, " %[a-zA-Z] = %s", name, fname);
-    strncpy( (optr->solver_params).arpack_logfile, fname, 200) ;
+    strncpy( (optr->solver_params).arpack_logfile, fname, strlen(fname)) ;
     if(myverbose) printf("  ARPACK logfile name is  set to %s line %d operator %d\n", fname, line_of_file, current_operator);
   }
   {SPC}*EVminHPD{EQL}{FLT} {
@@ -921,22 +921,11 @@ inline void rmQuotes(char *str){
     if(myverbose) printf("  Solver set to ARPACKCG line %d operator %d\n", line_of_file, current_operator);
     BEGIN(name_caller);
   }
-  arpackpolycg {
-    optr->solver = 17;
-    if(myverbose) printf("  Solver set to ARPACKPOLYCG line %d operator %d\n", line_of_file, current_operator);
-    BEGIN(name_caller);
-  }
   polypreconcgher {
-    optr->solver = 18;
+    optr->solver = 17;
     if(myverbose) printf("  Solver set to POLYPRECONCGHER line %d operator %d\n", line_of_file, current_operator);
     BEGIN(name_caller);
   }
-  arpackpolycgshifts {
-    optr->solver = 19;
-    if(myverbose) printf("  Solver set to POLYPRECONCGSHIFTS line %d operator %d\n", line_of_file, current_operator);
-    BEGIN(name_caller);
-  }
-
 }
 
 
@@ -951,27 +940,12 @@ inline void rmQuotes(char *str){
     if(myverbose) printf("  Solver set to ARPACKCG line %d operator %d\n", line_of_file, current_operator);
     BEGIN(name_caller);
   }
-  arpackpolycg {
-    optr->solver = 17;
-    if(myverbose) printf("  Solver set to ARPACKPOLYCG line %d operator %d\n", line_of_file, current_operator);
-    BEGIN(name_caller);
-  }
   polypreconcgher {
-    optr->solver = 18;
+    optr->solver = 17;
     if(myverbose) printf("  Solver set to POLYPRECONCGHER line %d operator %d\n", line_of_file, current_operator);
     BEGIN(name_caller);
   }
-  arpackpolycgshifts {
-    optr->solver = 19;
-    if(myverbose) printf("  Solver set to POLYPRECONCGSHIFTS line %d operator %d\n", line_of_file, current_operator);
-    BEGIN(name_caller);
-  }
-
 }
-
-
-
-
 
 
 <OVSOLVER>{
