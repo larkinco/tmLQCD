@@ -34,6 +34,7 @@ void evals_arpack(
   double amax,
   int store_basis,
   char *basis_fname,
+  int basis_prec,
   _Complex double *evals, 
   _Complex double *v,
   double tol, 
@@ -66,6 +67,9 @@ void evals_arpack(
   basis_fname: (IN) file name used to store the basis vectors
                     file names will be of the format
                     basis_fname.xxxxx where xxxxx will be the basis vector number with leading zeros
+  basis_prec : (IN) precision used to write the basis vectors
+                    0 single precision
+                    1 double precision
   evals : (OUT) array of size nev+1 which has the computed nev Ritz values
   v     : computed eigenvectors. Size is n*ncv spinors.
   tol    : Requested tolerance for the accuracy of the computed eigenvectors.
