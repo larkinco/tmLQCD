@@ -457,6 +457,27 @@ void evals_arpack(
 
              }
 
+             //write out the basis of the eigenvectors if needed
+             //=================================================
+             if(store_basis){
+                for(j=0; j < (*nconv); j++)
+                {
+                   char tmpstring[500];
+                   FILE *ofs=NULL;
+                   sprintf(tmpstring,"%s.%05d",basis_fname,j);
+                   if(g_proc_id == g_stdio_proc)
+                     fprintf(stderr,"Now writing basis vector #%d to file %s\n",j,tmpstring);
+
+                   if((ofs = fopen(tmpstring,"w")) == (FILE*)NULL){
+                      if(g_proc_id == g_stdio_proc)
+                        fprintf(stderr, "Error writing basis vector to file %s!\n",tmpstring);
+                   }
+                   else{
+                      write_eospinor((spinor *) &v[j*N], tmpstring, 0.0, 0.0, 0);  
+                   }
+                }
+             }
+
         }
 
         /*Print additional convergence information.*/

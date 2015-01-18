@@ -19,6 +19,7 @@
 #include "linalg/arpack.h"
 #include "memalloc.h"
 #include "solver/precon.h"
+#include "io/eospinor.ih"
 
 //evals_arpack(N,nev,ncv,kind,acc,cheb_k,emin,emax,evals,evecs,arpack_eig_tol,arpack_eig_maxiter,f,&info_arpack,&nconv,arpack_logfile);
 
