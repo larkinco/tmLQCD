@@ -218,7 +218,7 @@ int arpack_cg(
        }
        et2=gettime();
        if(g_proc_id == g_stdio_proc)
-          fprintf(stdout,"Finished reading deflation basis in %e seconds\n",e2-e1); 
+          fprintf(stdout,"Finished reading deflation basis in %e seconds\n",et2-et1); 
     }
     else
     {
