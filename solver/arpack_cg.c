@@ -78,6 +78,16 @@ int arpack_cg(
      int cheb_k,                    /*(IN) degree of the Chebyshev polynomial (irrelevant if acc=0)*/
      double emin,                      /*(IN) lower end of the interval where the acceleration will be used (irrelevant if acc=0)*/
      double emax,                      /*(IN) upper end of the interval where the acceleration will be used (irrelevant if acc=0)*/
+     int read_basis,               /*(IN) 0 compute deflation basis using arpack, 1 read deflation basis from disk */
+     int store_basis,              /*(IN) option to store basis vectors to disk such that they can be read later
+                                          0 don't store basis vectors
+                                          1 store basis vectors */
+     char *basis_fname,            /*(IN)file name used to read/store the basis vectors
+                                         file names will be of the format
+                                         basis_fname.xxxxx where xxxxx will be the basis vector number with leading zeros */
+     int basis_prec,               /*(IN)precision used to write the basis vectors
+                                         0 single precision
+                                         1 double precision*/
      char *arpack_logfile           /*(IN) file name to be used for printing out debugging information from arpack*/
      )
 { 
@@ -186,22 +196,48 @@ int arpack_cg(
        exit(1);
     }
 
-
-    et1=gettime();
-    evals_arpack(N,nev,ncv,kind,acc,cheb_k,emin,emax,evals,evecs,arpack_eig_tol,arpack_eig_maxiter,f,&info_arpack,&nconv,arpack_logfile);
-    et2=gettime();
-
-
-    if(info_arpack != 0){ //arpack didn't converge
-      if(g_proc_id == g_stdio_proc)
-        fprintf(stderr,"WARNING: ARPACK didn't converge. exiting..\n");
-      return -1;
-    }
-    
-    if(g_proc_id == g_stdio_proc)
+    if(read_basis)
     {
-       fprintf(stdout,"ARPACK has computed %d eigenvectors\n",nconv);
-       fprintf(stdout,"ARPACK time: %+e\n",et2-et1);
+       et1=gettime();
+       for(j=0; j<nev; j++)
+       {
+           char tmpstring[500];
+           FILE *ofs=NULL;
+           sprintf(tmpstring,"%s.%05d",basis_fname,j);
+           if(g_proc_id == g_stdio_proc)
+              fprintf(stderr,"Now reading basis vector #%d from file %s\n",j,tmpstring);
+
+           if((ofs = fopen(tmpstring,"r")) == (FILE*)NULL){
+              if(g_proc_id == g_stdio_proc)
+                fprintf(stderr, "Error reading basis vector from file %s!\n",tmpstring);
+           }
+           else{
+              read_eospinor(r, tmpstring);
+              assign_spinor_to_complex(&evecs[j*12*N],r,N);  
+           }
+       }
+       et2=gettime();
+       if(g_proc_id == g_stdio_proc)
+          fprintf(stdout,"Finished reading deflation basis in %e seconds\n",e2-e1); 
+    }
+    else
+    {
+       et1=gettime();
+       evals_arpack(N,nev,ncv,kind,acc,cheb_k,emin,emax,store_basis,basis_fname,basis_prec,evals,evecs,arpack_eig_tol,arpack_eig_maxiter,f,&info_arpack,&nconv,arpack_logfile);
+       et2=gettime();
+
+
+       if(info_arpack != 0){ //arpack didn't converge
+         if(g_proc_id == g_stdio_proc)
+           fprintf(stderr,"WARNING: ARPACK didn't converge. exiting..\n");
+         return -1;
+       }
+    
+       if(g_proc_id == g_stdio_proc)
+       {
+          fprintf(stdout,"ARPACK has computed %d eigenvectors\n",nconv);
+          fprintf(stdout,"ARPACK time: %+e\n",et2-et1);
+       }
     }
 
     H        = (_Complex double *) malloc(nconv*nconv*sizeof(_Complex double)); 

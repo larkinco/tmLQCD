@@ -66,6 +66,17 @@ int arpack_cg(
      int cheb_k,                    /*(IN) degree of the Chebyshev polynomial (irrelevant if acc=0)*/
      double emin,                      /*(IN) lower end of the interval where the acceleration will be used (irrelevant if acc=0)*/
      double emax,                      /*(IN) upper end of the interval where the acceleration will be used (irrelevant if acc=0)*/
+     int read_basis,               /*(IN) 0 compute deflation basis using arpack, 1 read deflation basis from disk */
+     int store_basis,              /*(IN) when using arpack to compute eigenvectors use this  
+                                          option to store basis vectors to disk such that they can be read later
+                                          0 don't store basis vectors
+                                          1 store basis vectors */
+     char *basis_fname,            /*(IN)file name used to read/store the basis vectors
+                                         file names will be of the format
+                                         basis_fname.xxxxx where xxxxx will be the basis vector number with leading zeros */
+     int basis_prec,               /*(IN)precision used to write the basis vectors
+                                         0 single precision
+                                         1 double precision*/
      char *arpack_logfile           /*(IN) file name to be used for printing out debugging information from arpack*/
      );
 

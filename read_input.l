@@ -647,6 +647,26 @@ inline void rmQuotes(char *str){
     (optr->solver_params).arpackcg_comp_evecs = a;
     if(myverbose) printf("  ARPACK compute evecs option set to   %d line %d operator %d\n", a, line_of_file, current_operator);
   }
+  {SPC}*ARPACKReadBasis{EQL}{DIGIT}+ {
+    sscanf(yytext, " %[a-zA-Z] = %d", name, &a);
+    (optr->solver_params).arpackcg_read_basis = a;
+    if(myverbose) printf("  ARPACKCG read_basis option set to   %d line %d operator %d\n", a, line_of_file, current_operator);
+  }
+  {SPC}*ARPACKStoreBasis{EQL}{DIGIT}+ {
+    sscanf(yytext, " %[a-zA-Z] = %d", name, &a);
+    (optr->solver_params).arpackcg_store_basis = a;
+    if(myverbose) printf("  ARPACK store basis option set to   %d line %d operator %d\n", a, line_of_file, current_operator);
+  }
+  {SPC}*ARPACKBasisPrec{EQL}{DIGIT}+ {
+    sscanf(yytext, " %[a-zA-Z] = %d", name, &a);
+    (optr->solver_params).arpackcg_basis_prec = a;
+    if(myverbose) printf("  ARPACK basis reading/writing precision option set to   %d line %d operator %d\n", a, line_of_file, current_operator);
+  }
+  {SPC}*ARPACBasisFileName{EQL}{FILENAME}+ {
+    sscanf(yytext, " %[a-zA-Z] = %s", name, fname);
+    strncpy( (optr->solver_params).arpackcg_basis_fname, fname, strlen(fname)) ;
+    if(myverbose) printf("  ARPACKCG basis file name is  set to %s line %d operator %d\n", fname, line_of_file, current_operator);
+  }
   {SPC}*ARPACKLogFile{EQL}{FILENAME}+ {
     sscanf(yytext, " %[a-zA-Z] = %s", name, fname);
     strncpy( (optr->solver_params).arpack_logfile, fname, strlen(fname)) ;
