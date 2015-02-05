@@ -36,6 +36,8 @@
 #define MIXEDCG 13
 #define CGMMSND 14
 #define INCREIGCG 15
+#define ARPACKCG 16
+#define POLYPRECONCGHER 17
 
 #include"solver/matrix_mult_typedef.h"
 #include "solver/matrix_mult_typedef_bi.h"
@@ -74,7 +76,9 @@ typedef struct {
 #include"solver/mr.h"
 #include"solver/gcr.h"
 #include"solver/incr_eigcg.h"
+#include"solver/arpack_cg.h"
 #include"solver/eigenvalues.h"
+#include"solver/eigenvalues_arpack.h"
 #include"solver/cg_mms_tm.h"
 #include"solver/mixed_cg_her.h"
 
