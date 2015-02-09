@@ -94,8 +94,8 @@ int arpack_cg(
 
   //Static variables and arrays.
   static int ncurRHS=0;                  /* current number of the system being solved */                   
-  static void *_ax,*_r,*_tmps1,*_tmps2;                  
-  static spinor *ax,*r,*tmps1,*tmps2;                  
+  static void *_ax,*_r,*_tmps1,*_tmps2,*zero_spinor;                  
+  static spinor *ax,*r,*tmps1,*tmps2,*zero_spinor;                  
   static _Complex double *evecs,*evals,*H,*HU,*Hinv,*initwork,*tmpv1;
   static _Complex double *zheev_work;
   static double *hevals,*zheev_rwork;
@@ -109,6 +109,8 @@ int arpack_cg(
   _Complex double c1,c2,tpone=1.0,tzero=0.0;
   double d1,d2,d3;
   double et1,et2;  //timing variables
+
+  int prec,status,rstat;
 
   int parallel;        /* for parallel processing of the scalar products */
   #ifdef MPI
@@ -170,16 +172,28 @@ int arpack_cg(
     else
        {tmps2  = (spinor *) ( ((unsigned long int)(_tmps2)+ALIGN_BASE)&~ALIGN_BASE);}
 
+    _zero_spinor = malloc((LDN+ALIGN_BASE)*sizeof(spinor));
+    if(_zero_spinor==NULL)
+    {
+       if(g_proc_id == g_stdio_proc)
+          fprintf(stderr,"insufficient memory for _zero_spinor inside arpack_cg.\n");
+       exit(1);
+    }
+    else
+       {zero_spinor  = (spinor *) ( ((unsigned long int)(_tmps2)+ALIGN_BASE)&~ALIGN_BASE);}
+
+
     #else
     ax = (spinor *) malloc(LDN*sizeof(spinor));
     r  = (spinor *) malloc(LDN*sizeof(spinor));
     tmps1 = (spinor *) malloc(LDN*sizeof(spinor));
     tmps2 = (spinor *) malloc(LDN*sizeof(spinor));
+    zero_spinor = (spinor *) malloc(LDN*sizeof(spinor));
     
-    if( (ax == NULL)  || (r==NULL) || (tmps1==NULL) || (tmps2==NULL) )
+    if( (ax == NULL)  || (r==NULL) || (tmps1==NULL) || (tmps2==NULL) || (zero_spinor==NULL) )
     {
        if(g_proc_id == g_stdio_proc)
-          fprintf(stderr,"insufficient memory for ax,r,tmps1,tmps2 inside arpack_cg.\n");
+          fprintf(stderr,"insufficient memory for ax,r,tmps1,tmps2,zero_spinor inside arpack_cg.\n");
        exit(1);
     }
     #endif
@@ -201,21 +215,64 @@ int arpack_cg(
        et1=gettime();
        for(j=0; j<nev; j++)
        {
-           char tmpstring[500];
-           FILE *ofs=NULL;
-           sprintf(tmpstring,"%s.%05d",basis_fname,j);
-           if(g_proc_id == g_stdio_proc)
-              fprintf(stderr,"Now reading basis vector #%d from file %s\n",j,tmpstring);
+            char filename[500],*header_type=NULL; 
+            READER *reader=NULL;
+            unit64_t bytes;
+            sprintf(filename, "%s.%.5d",basis_fname,j);
+            construct_reader(&reader,filename); 
+            DML_Checksum checksum;
 
-           if((ofs = fopen(tmpstring,"r")) == (FILE*)NULL){
-              if(g_proc_id == g_stdio_proc)
-                fprintf(stderr, "Error reading basis vector from file %s!\n",tmpstring);
-           }
-           else{
-              read_eospinor(r, tmpstring);
-              assign_spinor_to_complex(&evecs[j*12*N],r,N);  
-           }
-       }
+            /* Find the desired binary data*/
+            while ((status = ReaderNextRecord(reader)) != LIME_EOF) {
+               if (status != LIME_SUCCESS){
+                  fprintf(stderr, "ReaderNextRecord returned status %d.\n", status);
+                  break;
+               }
+               header_type = ReaderType(reader);
+               if (strcmp("scidac-binary-data", header_type) == 0) {
+                  break;
+               }
+            }
+
+            if (status == LIME_EOF) {
+               fprintf(stderr, "Unable to find requested LIME record scidac-binary-data in file %s.\nEnd of file reached before record was found.\n", filename);
+               return(-5);
+            }
+
+            bytes = ReaderBytes(reader);
+
+            if ((int)bytes == LX * g_nproc_x * LY * g_nproc_y * LZ * g_nproc_z * T * g_nproc_t * sizeof(spinor)) {
+               prec = 64;
+            }
+            else {
+               if ((int)bytes == LX * g_nproc_x * LY * g_nproc_y * LZ * g_nproc_z * T * g_nproc_t * sizeof(spinor) / 2) {
+                  prec = 32;
+               }
+               else {
+                  fprintf(stderr, "Length of scidac-binary-data record in %s does not match input parameters.\n", filename);
+                  fprintf(stderr, "Found %d bytes.\n", bytes);
+                  return(-6);
+               }
+            }
+
+            if (g_cart_id == 0 && g_debug_level >= 0) {
+               printf("# %s precision read (%d bits).\n", (prec == 64 ? "Double" : "Single") ,prec);
+            }
+
+            if( (rstat = read_binary_spinor_data(zero_spinor, r, reader, &checksum)) != 0) {
+              fprintf(stderr, "read_binary_spinor_data failed with return value %d", rstat);
+              return(-7);
+            }
+            assign_spinor_to_complex(&evecs[j*12*N],r,N); 
+
+            if (g_cart_id == 0 && g_debug_level >= 0) {
+                 printf("# Scidac checksums for DiracFermion field %s position %d:\n", filename, position);
+                 printf("#   Calculated            : A = %#x B = %#x.\n", checksum.suma, checksum.sumb);
+                 printf("# No Scidac checksum was read from headers, unable to check integrity of file.\n");
+            }
+
+            destruct_reader(reader);
+       } //for(j=0;...)
        et2=gettime();
        if(g_proc_id == g_stdio_proc)
           fprintf(stdout,"Finished reading deflation basis in %e seconds\n",et2-et1); 
@@ -223,7 +280,7 @@ int arpack_cg(
     else
     {
        et1=gettime();
-       evals_arpack(N,nev,ncv,kind,acc,cheb_k,emin,emax,store_basis,basis_fname,basis_prec,evals,evecs,arpack_eig_tol,arpack_eig_maxiter,f,&info_arpack,&nconv,arpack_logfile);
+       evals_arpack(N,nev,ncv,kind,acc,cheb_k,emin,emax,evals,evecs,arpack_eig_tol,arpack_eig_maxiter,f,&info_arpack,&nconv,arpack_logfile);
        et2=gettime();
 
 
@@ -275,6 +332,7 @@ int arpack_cg(
      }
 
      //compute Ritz values and Ritz vectors if needed
+     zero_spinor_field(zero_spinor,LDN); //this will be the even part of the eiegnvector (currently is zero)
      if( (nconv>0) && (comp_evecs !=0))
      {
          /* copy H into HU */
@@ -316,6 +374,46 @@ int arpack_cg(
 		       &HU[i*nconv],&ONE,&tzero,tmpv1,&ONE,1);
 
             assign_complex_to_spinor(r,tmpv1,12*N);
+      
+            if(store_basis){
+       
+               char filename[500];  
+
+               WRITER *writer=NULL;
+
+               sprintf(filename, "%s.%.5d",basis_fname,i);
+
+               construct_writer(&writer,filename,0); //0 means don't append
+
+               char *buff=NULL;
+               buff = (char *) malloc(512);
+               unit64_t bytes;
+
+
+               if(basis_prec==0)
+                 prec = 32;
+               else
+                 prec = 64;
+
+               sprintf(buff,"eigenvalue= %+e, precision= %d",hevals[i],prec);
+               bytes = strlen(buff);
+
+               //writing first some clarifying message information
+               #ifndef HAVE_LIBLEMON
+               if(g_cart_id == 0) {
+               #endif /* ! HAVE_LIBLEMON */
+                  /*MB=ME=1*/
+                  write_header(writer, 1, 1, "eigenvector-info", bytes);
+                  write_message(writer, buff, bytes);
+                  //close_writer_record(writer);
+                  free(buff);
+               #ifndef HAVE_LIBLEMON
+               }
+               #endif /* ! HAVE_LIBLEMON */
+
+               status = write_spinor(writer,zero_spinor,r,1,prec);
+               destruct_writer(writer);
+            } //if(store_basis)...
 
             d1=square_norm(r,N,parallel);
             

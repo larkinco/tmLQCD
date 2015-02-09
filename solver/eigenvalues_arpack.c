@@ -37,9 +37,6 @@ void evals_arpack(
   int cheb_k,
   double amin,
   double amax,
-  int store_basis,
-  char *basis_fname,
-  int basis_prec,
   _Complex double *evals, 
   _Complex double *v,
   double tol, 
@@ -455,27 +452,6 @@ void evals_arpack(
                if(g_proc_id == g_stdio_proc)
                   fprintf(stdout,"RitzValue[%06d]  %+e  %+e  error= %+e \n",j,creal(evals[sorted_evals_index[j]]),cimag(evals[sorted_evals_index[j]]),cabs(*(workl+ipntr[10]-1+sorted_evals_index[j])));
 
-             }
-
-             //write out the basis of the eigenvectors if needed
-             //=================================================
-             if(store_basis){
-                for(j=0; j < (*nconv); j++)
-                {
-                   char tmpstring[500];
-                   FILE *ofs=NULL;
-                   sprintf(tmpstring,"%s.%05d",basis_fname,j);
-                   if(g_proc_id == g_stdio_proc)
-                     fprintf(stderr,"Now writing basis vector #%d to file %s\n",j,tmpstring);
-
-                   if((ofs = fopen(tmpstring,"w")) == (FILE*)NULL){
-                      if(g_proc_id == g_stdio_proc)
-                        fprintf(stderr, "Error writing basis vector to file %s!\n",tmpstring);
-                   }
-                   else{
-                      write_eospinor((spinor *) &v[j*N], tmpstring, 0.0, 0.0, 0);  
-                   }
-                }
              }
 
         }
