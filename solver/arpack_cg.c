@@ -94,7 +94,7 @@ int arpack_cg(
 
   //Static variables and arrays.
   static int ncurRHS=0;                  /* current number of the system being solved */                   
-  static void *_ax,*_r,*_tmps1,*_tmps2,*zero_spinor;                  
+  static void *_ax,*_r,*_tmps1,*_tmps2,*_zero_spinor;                  
   static spinor *ax,*r,*tmps1,*tmps2,*zero_spinor;                  
   static _Complex double *evecs,*evals,*H,*HU,*Hinv,*initwork,*tmpv1;
   static _Complex double *zheev_work;
@@ -213,11 +213,12 @@ int arpack_cg(
     if(read_basis)
     {
        et1=gettime();
+       nconv=nev;
        for(j=0; j<nev; j++)
        {
             char filename[500],*header_type=NULL; 
             READER *reader=NULL;
-            unit64_t bytes;
+            uint64_t bytes;
             sprintf(filename, "%s.%.5d",basis_fname,j);
             construct_reader(&reader,filename); 
             DML_Checksum checksum;
@@ -266,7 +267,7 @@ int arpack_cg(
             assign_spinor_to_complex(&evecs[j*12*N],r,N); 
 
             if (g_cart_id == 0 && g_debug_level >= 0) {
-                 printf("# Scidac checksums for DiracFermion field %s position %d:\n", filename, position);
+                 printf("# Scidac checksums for DiracFermion field %s:\n", filename);
                  printf("#   Calculated            : A = %#x B = %#x.\n", checksum.suma, checksum.sumb);
                  printf("# No Scidac checksum was read from headers, unable to check integrity of file.\n");
             }
@@ -387,7 +388,7 @@ int arpack_cg(
 
                char *buff=NULL;
                buff = (char *) malloc(512);
-               unit64_t bytes;
+               uint64_t bytes;
 
 
                if(basis_prec==0)
@@ -405,13 +406,13 @@ int arpack_cg(
                   /*MB=ME=1*/
                   write_header(writer, 1, 1, "eigenvector-info", bytes);
                   write_message(writer, buff, bytes);
-                  //close_writer_record(writer);
+                  close_writer_record(writer);
                   free(buff);
                #ifndef HAVE_LIBLEMON
                }
                #endif /* ! HAVE_LIBLEMON */
 
-               status = write_spinor(writer,zero_spinor,r,1,prec);
+               status = write_spinor(writer,&zero_spinor,&r,1,prec);
                destruct_writer(writer);
             } //if(store_basis)...
 
