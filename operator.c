@@ -330,7 +330,7 @@ void op_invert(const int op_id, const int index_start, const int write_prop) {
         mul_r(optr->prop0, (2*optr->kappa), optr->prop0, VOLUME / 2);
         mul_r(optr->prop1, (2*optr->kappa), optr->prop1, VOLUME / 2);
       }
-      if (optr->solver != CGMMS && write_prop) /* CGMMS handles its own I/O */
+      if (( (optr->solver != CGMMS) && (optr->solver != ARPACK) ) &&  write_prop) /* CGMMS handles its own I/O */
         optr->write_prop(op_id, index_start, i);
       if(optr->DownProp) {
         optr->mu = -optr->mu;

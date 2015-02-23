@@ -204,6 +204,22 @@ int invert_eo(spinor * const Even_new, spinor * const Odd_new,
 
        Qtm_minus_psi(Odd_new, Odd_new);
     }
+    else if(solver_flag == ARPACK) {
+       /* computing the eigenvalues and eigenvectors of the hermitean operator squared */
+       gamma5(g_spinor_field[DUM_DERI], g_spinor_field[DUM_DERI], VOLUME/2);  
+       if(g_proc_id == 0) {printf("# Using ARPACK to compute eigenvectors of the hermitian operator squared!\n"); fflush(stdout);}
+
+       iter = arpack(VOLUME/2, &Qtm_pm_psi,
+                     solver_params.arpackcg_nev,solver_params.arpackcg_ncv,
+                     solver_params.arpackcg_eig_tol,solver_params.arpackcg_eig_maxiter,
+                     solver_params.arpackcg_evals_kind,solver_params.use_acc,
+                     solver_params.cheb_k,solver_params.op_evmin,solver_params.op_evmax,
+                     solver_params.arpackcg_store_basis,
+                     solver_params.arpackcg_basis_fname,solver_params.arpackcg_basis_prec,
+                     solver_params.arpack_logfile);
+
+       Qtm_minus_psi(Odd_new, Odd_new);
+    }
     else if(solver_flag == MIXEDCG) {
       /* Here we invert the hermitean operator squared */
       gamma5(g_spinor_field[DUM_DERI], g_spinor_field[DUM_DERI], VOLUME/2);
