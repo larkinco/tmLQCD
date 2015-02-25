@@ -221,7 +221,7 @@ int arpack_cg(
             char filename[500],*header_type=NULL; 
             READER *reader=NULL;
             uint64_t bytes;
-	    sprintf(filename, "%s.%05d", basis_fname, i);
+	    sprintf(filename, "%s.%05d", basis_fname, j);
             if( (rstat = read_spinor(zero_spinor, r, filename, 0)) != 0) {
               fprintf(stderr, "read_spinor failed with return value %d", rstat);
               exit(-7);
