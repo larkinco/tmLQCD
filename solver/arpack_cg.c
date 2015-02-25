@@ -221,61 +221,12 @@ int arpack_cg(
             char filename[500],*header_type=NULL; 
             READER *reader=NULL;
             uint64_t bytes;
-	    //sprintf(filename, "ev.%04d.%05d", nstore, i);
 	    sprintf(filename, "%s.%05d", basis_fname, i);
-            construct_reader(&reader,filename); 
-            DML_Checksum checksum;
-
-            /* Find the desired binary data*/
-            while ((status = ReaderNextRecord(reader)) != LIME_EOF) {
-               if (status != LIME_SUCCESS){
-                  fprintf(stderr, "ReaderNextRecord returned status %d.\n", status);
-                  break;
-               }
-               header_type = ReaderType(reader);
-               if (strcmp("scidac-binary-data", header_type) == 0) {
-                  break;
-               }
-            }
-
-            if (status == LIME_EOF) {
-               fprintf(stderr, "Unable to find requested LIME record scidac-binary-data in file %s.\nEnd of file reached before record was found.\n", filename);
-               return(-5);
-            }
-
-            bytes = ReaderBytes(reader);
-
-            if ((int)bytes == LX * g_nproc_x * LY * g_nproc_y * LZ * g_nproc_z * T * g_nproc_t * sizeof(spinor)) {
-               prec = 64;
-            }
-            else {
-               if ((int)bytes == LX * g_nproc_x * LY * g_nproc_y * LZ * g_nproc_z * T * g_nproc_t * sizeof(spinor) / 2) {
-                  prec = 32;
-               }
-               else {
-                  fprintf(stderr, "Length of scidac-binary-data record in %s does not match input parameters.\n", filename);
-                  fprintf(stderr, "Found %d bytes.\n", bytes);
-                  return(-6);
-               }
-            }
-
-            if (g_cart_id == 0 && g_debug_level >= 0) {
-               printf("# %s precision read (%d bits).\n", (prec == 64 ? "Double" : "Single") ,prec);
-            }
-
-            if( (rstat = read_binary_spinor_data(zero_spinor, r, reader, &checksum)) != 0) {
-              fprintf(stderr, "read_binary_spinor_data failed with return value %d", rstat);
-              return(-7);
+            if( (rstat = read_spinor(zero_spinor, r, filename, 0)) != 0) {
+              fprintf(stderr, "read_spinor failed with return value %d", rstat);
+              exit(-7);
             }
             assign_spinor_to_complex(&evecs[j*12*N],r,N); 
-
-            if (g_cart_id == 0 && g_debug_level >= 0) {
-                 printf("# Scidac checksums for DiracFermion field %s:\n", filename);
-                 printf("#   Calculated            : A = %#x B = %#x.\n", checksum.suma, checksum.sumb);
-                 printf("# No Scidac checksum was read from headers, unable to check integrity of file.\n");
-            }
-
-            destruct_reader(reader);
        } //for(j=0;...)
        et2=gettime();
        if(g_proc_id == g_stdio_proc)
