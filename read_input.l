@@ -952,7 +952,7 @@ static inline void rmQuotes(char *str){
     if(myverbose) printf("  Solver set to ARPACK line %d operator %d\n", line_of_file, current_operator);
     BEGIN(name_caller);
   }
-  reliablecgh {
+  reliablecg {
     optr->solver = 18;
     if(myverbose) printf("  Solver set to RELIABLECG line %d operator %d\n", line_of_file, current_operator);
     BEGIN(name_caller);
@@ -981,7 +981,7 @@ static inline void rmQuotes(char *str){
     if(myverbose) printf("  Solver set to ARPACK line %d operator %d\n", line_of_file, current_operator);
     BEGIN(name_caller);
   }
-  reliablecgh {
+  reliablecg {
     optr->solver = 18;
     if(myverbose) printf("  Solver set to RELIABLECG line %d operator %d\n", line_of_file, current_operator);
     BEGIN(name_caller);
