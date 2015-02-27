@@ -243,29 +243,6 @@ int arpack_cg(
           fprintf(stdout,"ARPACK has computed %d eigenvectors\n",nconv);
           fprintf(stdout,"ARPACK time: %+e\n",et2-et1);
        }
-       //------------------------------------------------
-       //compute the eigenvalues of A and their residuals
-       //------------------------------------------------
-       if(g_proc_id == g_stdio_proc)
-       {fprintf(stdout,"Ritz values of A and their residulas (||A*x-lambda*x||/||x||\n"); 
-        fprintf(stdout,"=============================================================\n");
-        fflush(stdout);}
-
-       for(i=0; i<nconv; i++)
-       {
-          assign_complex_to_spinor(r,&evecs[i*12*N],12*N);
-          f(ax,r);
-          c1 = scalar_prod(r,ax,N,parallel);
-          d1 = square_norm(r,N,parallel);
-          evalsA[i] = creal(c1)/d1;
-          mul_r(tmps1,evalsA[i],r,N);
-          diff(tmps2,ax,tmps1,N);
-          d2= square_norm(tmps2,N,parallel);
-          d3= sqrt(d2/d1);	    
-          if(g_proc_id == g_stdio_proc)
-          {fprintf(stdout,"Eval[%06d]: %22.15E rnorm: %22.15E\n", i, evalsA[i], d3); fflush(stdout);}
-       }
-
        //write the eigenvectors to disk if needed
        if(store_basis){
          for(i=0; i<nconv; i++)
@@ -293,7 +270,30 @@ int arpack_cg(
                {fprintf(stdout,"finished writing eigenvector %d to file %s\n", i,fname); fflush(stdout);}
          } 
        } //if(store_basis)
-     } //else for if(read_basis) 
+     } //else for if(read_basis)
+
+     //------------------------------------------------
+     //compute the eigenvalues of A and their residuals
+     //------------------------------------------------
+     if(g_proc_id == g_stdio_proc)
+     {fprintf(stdout,"Ritz values of A and their residulas (||A*x-lambda*x||/||x||\n"); 
+      fprintf(stdout,"=============================================================\n");
+      fflush(stdout);}
+
+     for(i=0; i<nconv; i++)
+     {
+        assign_complex_to_spinor(r,&evecs[i*12*N],12*N);
+        f(ax,r);
+        c1 = scalar_prod(r,ax,N,parallel);
+        d1 = square_norm(r,N,parallel);
+        evalsA[i] = creal(c1)/d1;
+        mul_r(tmps1,evalsA[i],r,N);
+        diff(tmps2,ax,tmps1,N);
+        d2= square_norm(tmps2,N,parallel);
+        d3= sqrt(d2/d1);	    
+        if(g_proc_id == g_stdio_proc)
+        {fprintf(stdout,"Eval[%06d]: %22.15E rnorm: %22.15E\n", i, evalsA[i], d3); fflush(stdout);}
+     }
   } //if(ncurRHS==0)
     
   double eps_sq_used,restart_eps_sq_used;  //tolerance squared for the linear system
