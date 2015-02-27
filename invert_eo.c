@@ -208,7 +208,7 @@ int invert_eo(spinor * const Even_new, spinor * const Odd_new,
        /* Here we invert the hermitean operator squared */
        gamma5(g_spinor_field[DUM_DERI], g_spinor_field[DUM_DERI], VOLUME/2);  
        if(g_proc_id == 0) {printf("# Using RELIABLECG!\n"); fflush(stdout);}
-       iter = cg_her(Odd_new, g_spinor_field[DUM_DERI], max_iter, precision, rel_prec, VOLUME/2, &Qtm_pm_psi,solver_params.cg_reliable_update_freq);
+       iter = reliable_cg_her(Odd_new, g_spinor_field[DUM_DERI], max_iter, precision, rel_prec, VOLUME/2, &Qtm_pm_psi,solver_params.cg_reliable_update_freq);
        Qtm_minus_psi(Odd_new, Odd_new);
     }
     else if(solver_flag == ARPACK) {
