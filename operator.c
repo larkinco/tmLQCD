@@ -117,6 +117,9 @@ int add_operator(const int type) {
   optr->write_prop = &op_write_prop;
 
   //setting some default values for the solver_params struct
+  //reliable_cg
+  (optr->solver_params).cg_reliable_update_freq=1000;
+
   //eigcg
   (optr->solver_params).eigcg_nrhs=0;          
   (optr->solver_params).eigcg_nrhs1=0;          

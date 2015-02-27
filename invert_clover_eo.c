@@ -84,6 +84,13 @@ int invert_clover_eo(spinor * const Even_new, spinor * const Odd_new,
 		 VOLUME/2, Qsq);
     Qm(Odd_new, Odd_new);
   }
+  if(solver_flag == RELIABLECG){
+    if(g_proc_id == 0) {printf("# Using RELIABLECG!\n"); fflush(stdout);}
+    iter = cg_her(Odd_new, g_spinor_field[DUM_DERI], max_iter, 
+		 precision, rel_prec, 
+		 VOLUME/2, Qsq, solver_params.cg_reliable_update_freq);
+    Qm(Odd_new, Odd_new);
+  }
   else if(solver_flag == POLYPRECONCGHER){
     if(g_proc_id == 0) {printf("# Using POLY_PRECON_CG_HER!\n"); fflush(stdout);}
     iter = poly_precon_cg_her(Odd_new, g_spinor_field[DUM_DERI], max_iter, 

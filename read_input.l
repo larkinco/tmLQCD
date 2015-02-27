@@ -683,6 +683,11 @@ static inline void rmQuotes(char *str){
     (optr->solver_params).op_evmax = c;
     if(myverbose) printf("  op_evmax set to %lf line %d operator %d\n", c, line_of_file, current_operator);
   }
+  {SPC}*ReliableUpdateFreq{EQL}{DIGIT}+ {
+    sscanf(yytext, " %[a-zA-Z] = %d", name, &a);
+    (optr->solver_params).cg_reliable_update_freq = a;
+    if(myverbose) printf("  cg_reliable_update_frequency set to   %d line %d operator %d\n", a, line_of_file, current_operator);
+  }
   {SPC}*ExtraMasses{EQL}{FLTLIST} {
     char * token = NULL;
     optr->no_extra_masses = 0;
@@ -947,8 +952,13 @@ static inline void rmQuotes(char *str){
     if(myverbose) printf("  Solver set to ARPACK line %d operator %d\n", line_of_file, current_operator);
     BEGIN(name_caller);
   }
-  polypreconcgher {
+  reliablecgh {
     optr->solver = 18;
+    if(myverbose) printf("  Solver set to RELIABLECG line %d operator %d\n", line_of_file, current_operator);
+    BEGIN(name_caller);
+  }
+  polypreconcgher {
+    optr->solver = 19;
     if(myverbose) printf("  Solver set to POLYPRECONCGHER line %d operator %d\n", line_of_file, current_operator);
     BEGIN(name_caller);
   }
@@ -971,8 +981,13 @@ static inline void rmQuotes(char *str){
     if(myverbose) printf("  Solver set to ARPACK line %d operator %d\n", line_of_file, current_operator);
     BEGIN(name_caller);
   }
-  polypreconcgher {
+  reliablecgh {
     optr->solver = 18;
+    if(myverbose) printf("  Solver set to RELIABLECG line %d operator %d\n", line_of_file, current_operator);
+    BEGIN(name_caller);
+  }
+  polypreconcgher {
+    optr->solver = 19;
     if(myverbose) printf("  Solver set to POLYPRECONCGHER line %d operator %d\n", line_of_file, current_operator);
     BEGIN(name_caller);
   }

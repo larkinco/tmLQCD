@@ -38,7 +38,8 @@
 #define INCREIGCG 15
 #define ARPACKCG 16
 #define ARPACK 17
-#define POLYPRECONCGHER 18
+#define RELIABLECG 18
+#define POLYPRECONCGHER 19
 
 #include"solver/matrix_mult_typedef.h"
 #include "solver/matrix_mult_typedef_bi.h"

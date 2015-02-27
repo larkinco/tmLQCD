@@ -32,6 +32,11 @@
 
 typedef struct {
 
+  /**********************************
+   * CG with reliable updates
+   *********************************/
+   int cg_reliable_update_freq; //frequency of computing the residual exactly in reliable_cg
+
   /********************************
    * Incremental EigCG parameters
    ********************************/

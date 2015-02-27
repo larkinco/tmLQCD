@@ -25,4 +25,8 @@
 int cg_her(spinor * const, spinor * const, const int max_iter, double eps_sq, const int rel_prec,
 	   const int N, matrix_mult f);
 
+
+int reliable_cg_her(spinor * const, spinor * const, const int max_iter, double eps_sq, const int rel_prec,
+	   const int N, matrix_mult f, const int update_freq);
+
 #endif
