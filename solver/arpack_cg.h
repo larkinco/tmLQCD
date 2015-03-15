@@ -47,7 +47,10 @@ int arpack_cg(
      const int rel_prec,      /*(IN) 0 for using absoute error for convergence
                                      1 for using relative error for convergence*/
      const int maxit,         /*(IN) Maximum allowed number of iterations to solution for the linear system*/
-
+     int start_vec_opt,             /*(IN) 0 use the default random starting vector for ARPACK
+                                           1 read a starting vector from disk */
+     char *start_vec_fname,         /*(IN) filename to read the starting vector 
+                                           irrelevant if use_start_vec=0 */
      //parameters for arpack
      const int nev,                 /*(IN) number of eigenvectors to be computed by arpack*/
      const int ncv,                 /*(IN) size of the subspace used by arpack with the condition (nev+1) =< ncv*/
@@ -97,6 +100,10 @@ int arpack(
                                            3 for eigenvalues with largest absolute value  "LM"
                                            4 for eigenvalues with smallest imaginary part "SI"
                                            5 for eigenvalues with largest imaginary part  "LI"*/
+     int start_vec_opt,             /*(IN) 0 use the default random starting vector for ARPACK
+                                           1 read a starting vector from disk */
+     char *start_vec_fname,         /*(IN) filename to read the starting vector 
+                                           irrelevant if use_start_vec=0 */
      int acc,                       /*(IN) 0 no polynomial acceleration
                                            1 use polynomial acceleration*/
      int cheb_k,                    /*(IN) degree of the Chebyshev polynomial (irrelevant if acc=0)*/
