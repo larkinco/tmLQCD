@@ -41,6 +41,8 @@ void evals_arpack(
   _Complex double *v,
   double tol, 
   int maxiter, 
+  int  start_vec_opt,
+  char *start_vec_fname, 
   matrix_mult av, 
   int *info, 
   int *nconv,
@@ -77,6 +79,10 @@ void evals_arpack(
   tol    : Requested tolerance for the accuracy of the computed eigenvectors.
            A value of 0 means machine precision.
   maxiter: maximum number of restarts (iterations) allowed to be used by ARPACK
+  start_vec_opt:  0 use the default random starting vector for ARPACK
+                  1 read a starting vector from disk 
+  start_vec_fname:  filename to read the starting vector
+                    irrelevant if start_vec_opt=0 
   av     : operator for computing the action of the matrix on the vector
            av(vout,vin) where vout is output spinor and vin is input spinors.
   info   : output from arpack. 0 means that it converged to the desired tolerance. 
@@ -236,8 +242,11 @@ void evals_arpack(
 
    double d1,d2,d3;
 
-   
-   (*info) = 0;                 //means use a random starting vector with Arnoldi
+   //variables used to read the starting vector
+   int rstat;
+   char filename[500],*header_type=NULL; 
+   READER *reader=NULL;
+   uint64_t bytes;
 
    void *_x,*_ax,*_r,*_tmps1,*_tmps2;   //spinors that might be needed
    spinor *x,*ax,*r,*tmps1,*tmps2;      //spinors that might be needed
@@ -297,6 +306,22 @@ void evals_arpack(
    /* Code added to print the log of ARPACK */
    //const char *arpack_logfile;
    int arpack_log_u = 9999;
+
+   if(start_vec_opt==0)
+   { 
+     (*info) = 0;                 //means use a random starting vector with Arnoldi
+   }
+   else
+   {
+     (*info)=1;
+     sprintf(filename,"%s",start_vec_fname);
+     if((rstat=read_spinor(tmps1,tmps2,filename,0)) != 0){
+        fprintf(stderr, "read_spinor failed with return value %d", rstat);
+        exit(-7);
+     }
+     assign_spinor_to_complex(resid,tmps2,n);
+   } 
+
 
 #ifndef MPI
    //sprintf(arpack_logfile,"ARPACK_output.log");

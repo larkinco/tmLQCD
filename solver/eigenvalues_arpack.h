@@ -36,7 +36,9 @@ void evals_arpack(
   _Complex double *evals, 
   _Complex double *v,
   double tol, 
-  int maxiter, 
+  int maxiter,
+  int  start_vec_opt,
+  char *start_vec_fname, 
   matrix_mult av, 
   int *info, 
   int *nconv,
@@ -73,6 +75,10 @@ void evals_arpack(
   tol    : Requested tolerance for the accuracy of the computed eigenvectors.
            A value of 0 means machine precision.
   maxiter: maximum number of restarts (iterations) allowed to be used by ARPACK
+  start_vec_opt:  0 use the default random starting vector for ARPACK
+                  1 read a starting vector from disk 
+  start_vec_fname:  filename to read the starting vector
+                    irrelevant if start_vec_opt=0 
   av     : operator for computing the action of the matrix on the vector
            av(vout,vin) where vout is output spinor and vin is input spinors.
   info   : output from arpack. 0 means that it converged to the desired tolerance. 
