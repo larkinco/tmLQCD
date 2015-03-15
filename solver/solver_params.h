@@ -78,6 +78,11 @@ typedef struct {
    int    arpackcg_eig_maxiter;   /*Maximum number of iterations to be used by arpack*/
    int    arpackcg_read_basis;    /*0 compute the basis vector of the deflation subspace using arpack
                                     1 read the basis vectors for the deflation subspace from disk*/
+   int  arpackcg_start_vec_opt;    /*(IN) 0 use the default random starting vector for ARPACK
+                                          1 read a starting vector from disk */
+   char arpackcg_start_vec_fname[500];         /*(IN) filename to read the starting vector 
+                                                      irrelevant if use_start_vec=0 */
+
    int    arpackcg_store_basis;   /*if computing the basis of the deflation subspace then store them
                                     if store_basis =1, or don't store them if store_basis=0*/
    char   arpackcg_basis_fname[500];   /*first part of the name of the file name used to store the 
