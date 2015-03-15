@@ -618,6 +618,16 @@ static inline void rmQuotes(char *str){
     (optr->solver_params).arpackcg_eig_maxiter = a;
     if(myverbose) printf("  arpackcg_eig_maxiter set to %d line %d operator %d\n", a, line_of_file, current_operator);
   }
+  {SPC}*ARPACKStartVecOpt{EQL}{DIGIT}+ {
+    sscanf(yytext, " %[a-zA-Z] = %d", name, &a);
+    (optr->solver_params).arpackcg_start_vec_opt = a;
+    if(myverbose) printf("  arpackcg_start_vec_opt set to %d line %d operator %d\n", a, line_of_file, current_operator);
+  }
+  {SPC}*ARPACKStartVecFname{EQL}{FILENAME}+ {
+    sscanf(yytext, " %[a-zA-Z] = %s", name, fname);
+    strncpy( (optr->solver_params).arpackcg_start_vec_fname, fname, strlen(fname)) ;
+    if(myverbose) printf("  ARPACK start vector file name is  set to %s line %d operator %d\n", fname, line_of_file, current_operator);
+  }
   {SPC}*ARPACKCGtolsq1{EQL}{FLT} {
     sscanf(yytext, " %[a-zA-Z1] = %lf", name, &c);
     (optr->solver_params).arpackcg_eps_sq1 = c;
