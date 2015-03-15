@@ -59,10 +59,6 @@ int arpack_cg(
      const int rel_prec,      /*(IN) 0 for using absoute error for convergence
                                      1 for using relative error for convergence*/
      const int maxit,         /*(IN) Maximum allowed number of iterations to solution for the linear system*/
-     int start_vec_opt,             /*(IN) 0 use the default random starting vector for ARPACK
-                                           1 read a starting vector from disk */
-     char *start_vec_fname,         /*(IN) filename to read the starting vector 
-                                           irrelevant if use_start_vec=0 */
      //parameters for arpack
      const int nev,                 /*(IN) number of eigenvectors to be computed by arpack*/
      const int ncv,                 /*(IN) size of the subspace used by arpack with the condition (nev+1) =< ncv*/
@@ -74,6 +70,10 @@ int arpack_cg(
                                            3 for eigenvalues with largest absolute value "LM"
                                            4 for eigenvalues with smallest imaginary part "SI"
                                            5 for eigenvalues with largest imaginary part  "LI"*/
+     int start_vec_opt,             /*(IN) 0 use the default random starting vector for ARPACK
+                                           1 read a starting vector from disk */
+     char *start_vec_fname,         /*(IN) filename to read the starting vector 
+                                           irrelevant if use_start_vec=0 */
      int comp_evecs,                /*(IN) 0 don't compute the eiegnvalues and their residuals of the original system 
                                            1 compute the eigenvalues and the residuals for the original system (the orthonormal baiss
                                              still be used in deflation and they are not overwritten).*/
