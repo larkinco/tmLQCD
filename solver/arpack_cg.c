@@ -246,33 +246,54 @@ int arpack_cg(
           fprintf(stdout,"ARPACK has computed %d eigenvectors\n",nconv);
           fprintf(stdout,"ARPACK time: %+e\n",et2-et1);
        }
+      //needed for writing the eigenvectors
+      WRITER *writer;
+      int append,precision,numb_flavs,status;
+      char fname[256];	
+      paramsPropagatorFormat *format;
+      numb_flavs = 1;
+      if(basis_prec==0)
+         precision = 32;
+      else
+         precision = 64;
+
        //write the eigenvectors to disk if needed
        if(store_basis){
+         zero_spinor_field(tmps1,LDN); //this will be the even part of the eiegnvector (currently is zero)
          for(i=0; i<nconv; i++)
          {
             assign_complex_to_spinor(r,&evecs[i*12*N],12*N);
-            WRITER *writer = NULL;
-	    int append = 0;
-	    char fname[256];	
-	    paramsPropagatorFormat *format = NULL;
-	    int precision;
-	    int numb_flavs = 1;
-            if(basis_prec==0)
-              precision = 32;
-            else
-              precision = 64;
-
+            if(start_vec_opt != 0)
+              add(tmps1,tmps1,r,N);
+            writer = NULL;
+	    append = 0;	
+	    format = NULL;
 	    sprintf(fname, "%s.%05d", basis_fname, i);
 	    construct_writer(&writer, fname, append);
 	    format = construct_paramsPropagatorFormat(precision, numb_flavs);
 	    write_propagator_format(writer, format);
 	    free(format);	    
-	    int status = write_spinor(writer, &zero_spinor, &r, numb_flavs, precision);
+	    status = write_spinor(writer, &zero_spinor, &r, numb_flavs, precision);
 	    destruct_writer(writer);
             if(g_proc_id == g_stdio_proc)
                {fprintf(stdout,"finished writing eigenvector %d to file %s\n", i,fname); fflush(stdout);}
          } 
        } //if(store_basis)
+       //write the prepared starting vector if needed
+       if(start_vec_opt != 0){
+         writer = NULL;
+         append = 0;	
+         format = NULL;
+         sprintf(fname,"arpack_starting_vec");
+         construct_writer(&writer,fname,append);
+         format = construct_paramsPropagatorFormat(precision, numb_flavs);
+         write_propagator_format(writer, format);
+         free(format);	    
+         status = write_spinor(writer, &zero_spinor, &tmps1, numb_flavs, precision);
+         destruct_writer(writer);
+         if(g_proc_id == g_stdio_proc)
+         {fprintf(stdout,"finished writing the arpack starting vector\n"); fflush(stdout);}
+       }
      } //else for if(read_basis)
 
      //------------------------------------------------
@@ -609,6 +630,7 @@ int arpack(
      fprintf(stdout,"=============================================================\n");
      fflush(stdout);}
 
+
     for(i=0; i<nconv; i++)
     {
        assign_complex_to_spinor(r,&evecs[i*12*N],12*N);
@@ -624,33 +646,60 @@ int arpack(
        {fprintf(stdout,"Eval[%06d]: %22.15E rnorm: %22.15E\n", i, evalsA[i], d3); fflush(stdout);}
     }
 
+    //needed for writing the eigenvectors
+    WRITER *writer;
+    int append,precision,numb_flavs,status;
+    char fname[256];	
+    paramsPropagatorFormat *format;
+    numb_flavs = 1;
+    if(basis_prec==0)
+       precision = 32;
+    else
+       precision = 64;
+
     //write the eigenvectors to disk if needed
     if(store_basis){
+      zero_spinor_field(tmps1,LDN); //this will be the even part of the eiegnvector (currently is zero)
       for(i=0; i<nconv; i++)
       {
          assign_complex_to_spinor(r,&evecs[i*12*N],12*N);
-         WRITER *writer = NULL;
-	 int append = 0;
-	 char fname[256];	
-	 paramsPropagatorFormat *format = NULL;
-	 int precision;
-	 int numb_flavs = 1;
-         if(basis_prec==0)
-           precision = 32;
-         else
-           precision = 64;
-
+         //prepare a starting vector as a sum of the computed basis if needed
+         if(start_vec_opt != 0)
+         {
+            add(tmps1,tmps1,r,N);
+         }
+         writer = NULL;
+	 append = 0;	
+	 format = NULL;
 	 sprintf(fname, "%s.%05d", basis_fname, i);
 	 construct_writer(&writer, fname, append);
 	 format = construct_paramsPropagatorFormat(precision, numb_flavs);
 	 write_propagator_format(writer, format);
 	 free(format);	    
-	 int status = write_spinor(writer, &zero_spinor, &r, numb_flavs, precision);
+	 status = write_spinor(writer, &zero_spinor, &r, numb_flavs, precision);
 	 destruct_writer(writer);
          if(g_proc_id == g_stdio_proc)
             {fprintf(stdout,"finished writing eigenvector %d to file %s\n", i,fname); fflush(stdout);}
-      } 
+      }
+
+      //write the prepared starting vector if needed
+      if(start_vec_opt !=0)
+      {
+         writer = NULL;
+         append = 0;	
+         format = NULL;
+         sprintf(fname,"arpack_starting_vec");
+         construct_writer(&writer,fname,append);
+         format = construct_paramsPropagatorFormat(precision, numb_flavs);
+         write_propagator_format(writer, format);
+         free(format);	    
+         status = write_spinor(writer, &zero_spinor, &tmps1, numb_flavs, precision);
+         destruct_writer(writer);
+         if(g_proc_id == g_stdio_proc)
+         {fprintf(stdout,"finished writing the arpack starting vector\n"); fflush(stdout);}
+      }
     } //if(store_basis)
+
     #if ( (defined SSE) || (defined SSE2) || (defined SSE3)) 
     free(_ax);  free(_r);  free(_tmps1); free(_tmps2);
     #else
