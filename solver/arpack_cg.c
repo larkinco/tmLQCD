@@ -278,9 +278,6 @@ int arpack_cg(
             if(g_proc_id == g_stdio_proc)
                {fprintf(stdout,"finished writing eigenvector %d to file %s\n", i,fname); fflush(stdout);}
          } 
-       } //if(store_basis)
-       //write the prepared starting vector if needed
-       if(start_vec_opt != 0){
          writer = NULL;
          append = 0;	
          format = NULL;
@@ -293,7 +290,8 @@ int arpack_cg(
          destruct_writer(writer);
          if(g_proc_id == g_stdio_proc)
          {fprintf(stdout,"finished writing the arpack starting vector\n"); fflush(stdout);}
-       }
+       } //if(store_basis)
+       //write the summation vector of the basis
      } //else for if(read_basis)
 
      //------------------------------------------------
@@ -682,22 +680,18 @@ int arpack(
             {fprintf(stdout,"finished writing eigenvector %d to file %s\n", i,fname); fflush(stdout);}
       }
 
-      //write the prepared starting vector if needed
-      if(start_vec_opt !=0)
-      {
-         writer = NULL;
-         append = 0;	
-         format = NULL;
-         sprintf(fname,"arpack_starting_vec");
-         construct_writer(&writer,fname,append);
-         format = construct_paramsPropagatorFormat(precision, numb_flavs);
-         write_propagator_format(writer, format);
-         free(format);	    
-         status = write_spinor(writer, &zero_spinor, &tmps1, numb_flavs, precision);
-         destruct_writer(writer);
-         if(g_proc_id == g_stdio_proc)
-         {fprintf(stdout,"finished writing the arpack starting vector\n"); fflush(stdout);}
-      }
+      writer = NULL;
+      append = 0;	
+      format = NULL;
+      sprintf(fname,"%s",start_vec_fname);
+      construct_writer(&writer,fname,append);
+      format = construct_paramsPropagatorFormat(precision, numb_flavs);
+      write_propagator_format(writer, format);
+      free(format);	    
+      status = write_spinor(writer, &zero_spinor, &tmps1, numb_flavs, precision);
+      destruct_writer(writer);
+      if(g_proc_id == g_stdio_proc)
+      {fprintf(stdout,"finished writing the arpack starting vector\n"); fflush(stdout);}
     } //if(store_basis)
 
     #if ( (defined SSE) || (defined SSE2) || (defined SSE3)) 
