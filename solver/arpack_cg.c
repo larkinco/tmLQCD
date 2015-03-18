@@ -263,8 +263,7 @@ int arpack_cg(
          for(i=0; i<nconv; i++)
          {
             assign_complex_to_spinor(r,&evecs[i*12*N],12*N);
-            if(start_vec_opt != 0)
-              add(tmps1,tmps1,r,N);
+            add(tmps1,tmps1,r,N);
             writer = NULL;
 	    append = 0;	
 	    format = NULL;
@@ -662,10 +661,7 @@ int arpack(
       {
          assign_complex_to_spinor(r,&evecs[i*12*N],12*N);
          //prepare a starting vector as a sum of the computed basis if needed
-         if(start_vec_opt != 0)
-         {
-            add(tmps1,tmps1,r,N);
-         }
+         add(tmps1,tmps1,r,N);
          writer = NULL;
 	 append = 0;	
 	 format = NULL;
