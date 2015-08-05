@@ -46,12 +46,11 @@
 #define CR 16
 #define CGMMSND 17
 #define QSQFGMRES 18
-#define CGMMSND 19
-#define INCREIGCG 20 
-#define SUMR 21
-#define ARPACKCG 22 
-#define ARPACK 23 
-#define POLYPRECONCGHER 24 
+#define INCREIGCG 19 
+#define SUMR 20
+#define ARPACKCG 21 
+#define ARPACK  22
+#define POLYPRECONCGHER  23
 
 //>>>>>>> 972e2e669cddf6ff4587504e2f22cdc3e33e265a
 

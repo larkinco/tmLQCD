@@ -1089,6 +1089,8 @@ static inline void rmQuotes(char *str){
   polypreconcgher {
     optr->solver = 24;
     if(myverbose) printf("  Solver set to POLYPRECONCGHER line %d operator %d\n", line_of_file, current_operator);
+    BEGIN(name_caller);
+  }
   qsqfgmres {
     optr->solver=18;
     g_dflgcr_flag = 1;
