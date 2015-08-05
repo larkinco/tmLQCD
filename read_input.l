@@ -264,6 +264,9 @@ static inline void rmQuotes(char *str){
 %x GPU
 %x INITGPU
 
+%x DEFLATION
+%x INITDEFLATION
+
 %x INITOPERATOR
 %x TMOP
 %x DBTMOP
@@ -411,7 +414,7 @@ static inline void rmQuotes(char *str){
 ^DflPolyIter{EQL}                  BEGIN(DFLPOLYITER);
 
 ^BeginGPU                          BEGIN(INITGPU);
-
+^BeginDeflation					   BEGIN(INITDEFLATION);
 
 
 
@@ -464,6 +467,125 @@ static inline void rmQuotes(char *str){
   BEGIN(0);
   }
 }
+
+<INITDEFLATION>Init{SPC}* {
+ if(myverbose) printf("Initialising DEFLATION line %d\n", line_of_file); 
+ BEGIN(DEFLATION);
+ }
+<DEFLATION>{
+  
+  {SPC}*GlobalVectorsNum{SPC}*={SPC}*{DIGIT}+ {
+    sscanf(yytext, " %[2a-zA-Z] = %d", name, &a);
+    g_N_s = a;
+    if(myverbose) printf("Number of global vectors set to %d line %d\n", a, line_of_file);
+  }
+
+  {SPC}*OuterloopMsap{EQL}yes {
+    Msap_precon = 1;
+    if(myverbose) printf("UseIQDFL set to true line %d monomial %d\n", line_of_file, current_monomial);
+  }
+
+  {SPC}*OuterloopMsap{EQL}no {
+    Msap_precon = 0;
+    if(myverbose) printf("UseIQDFL set to false line %d monomial %d\n", line_of_file, current_monomial);
+  }
+
+  {SPC}*NiterMsap{SPC}*={SPC}*{DIGIT}+ {
+    sscanf(yytext, " %[2a-zA-Z] = %d", name, &a);
+    NiterMsap = a;
+    if(myverbose) printf("NiterMsap set to %d line %d\n", a, line_of_file);
+  }
+
+  {SPC}*NcycleMsap{SPC}*={SPC}*{DIGIT}+ {
+    sscanf(yytext, " %[2a-zA-Z] = %d", name, &a);
+    NcycleMsap = a;
+    if(myverbose) printf("NcycleMsap set to %d line %d\n", a, line_of_file);
+  }
+
+  {SPC}*NiterMsapDfl{SPC}*={SPC}*{DIGIT}+ {
+    sscanf(yytext, " %[2a-zA-Z] = %d", name, &a);
+    NiterMsap_dflgen = a;
+    if(myverbose) printf("NiterMsapDfl set to %d line %d\n", a, line_of_file);
+  }
+
+  {SPC}*NcycleMsapDfl{SPC}*={SPC}*{DIGIT}+ {
+    sscanf(yytext, " %[2a-zA-Z] = %d", name, &a);
+    NcycleMsap_dflgen = a;
+    if(myverbose) printf("NcycleMsapDfl set to %d line %d\n", a, line_of_file);
+  }
+
+  {SPC}*NsmoothMsapDfl{SPC}*={SPC}*{DIGIT}+ {
+    sscanf(yytext, " %[2a-zA-Z] = %d", name, &a);
+    NsmoothMsap_dflgen = a;
+    if(myverbose) printf("NsmoothMsapDfl set to %d line %d\n", a, line_of_file);
+  }
+
+  {SPC}*LittleGMRESMParameter{SPC}*={SPC}*{DIGIT}+ {
+    sscanf(yytext, " %[2a-zA-Z] = %d", name, &a);
+    little_gmres_m_parameter = a;
+    if(myverbose) printf("LittleGMRESMParameter set to %d line %d\n", a, line_of_file);
+  }
+
+  {SPC}*LittleSolverLowPrecision{EQL}{FLT} {
+    sscanf(yytext, " %[2a-zA-Z] = %lf", name, &c);
+    little_solver_low_prec = c;
+    if(myverbose) printf("Low precision for little Dirac solver set to %e line %d\n", c, line_of_file);
+  }
+
+  {SPC}*LittleSolverHighPrecision{EQL}{FLT} {
+    sscanf(yytext, " %[2a-zA-Z] = %lf", name, &c);
+    little_solver_high_prec = c;
+    if(myverbose) printf("High precision for little Dirac solver set to %e line %d\n", c, line_of_file);
+  }
+
+  {SPC}*UseiQDFL{EQL}yes {
+    use_iQ_dfl = 1;
+    if(myverbose) printf("UseIQDFL set to true line %d monomial %d\n", line_of_file, current_monomial);
+  }
+  {SPC}*UseiQDFL{EQL}no {
+    use_iQ_dfl = 0;
+    if(myverbose) printf("UseIQDFL set to false line %d monomial %d\n", line_of_file, current_monomial);
+  }
+
+  {SPC}*LittleSolver{EQL}gcr {
+    little_solver = 0;
+    if(myverbose) printf("Littlesolver set to gcr line %d monomial %d\n", line_of_file, current_monomial);
+  }
+
+  {SPC}*LittleSolver{EQL}mcr {
+    little_solver = 1;
+    if(myverbose) printf("Littlesolver set to mcr line %d monomial %d\n", line_of_file, current_monomial);
+  }
+
+  {SPC}*LittleSolver{EQL}mr {
+    little_solver = 2;
+    if(myverbose) printf("Littlesolver set to mr line %d monomial %d\n", line_of_file, current_monomial);
+  }
+
+  {SPC}*UsePL{EQL}yes {
+    usePL = 1;
+    if(myverbose) printf("UsePL set to true line %d monomial %d\n", line_of_file, current_monomial);
+  }
+
+  {SPC}*UsePL{EQL}no {
+    usePL = 0;
+    if(myverbose) printf("UsePL set to true line %d monomial %d\n", line_of_file, current_monomial);
+  }
+
+  {SPC}*LittleEvenOdd{EQL}yes {
+    little_evenodd = 1;
+    if(myverbose) printf("LittleEvenOdd set to true line %d monomial %d\n", line_of_file, current_monomial);
+  }
+  {SPC}*LittleEvenOdd{EQL}no {
+    little_evenodd = 0;
+    if(myverbose) printf("LittleEvenOdd set to true line %d monomial %d\n", line_of_file, current_monomial);
+  }
+  EndDeflationInit{SPC}* {
+  if(myverbose) printf("DEFLATION parsed in line %d\n\n", line_of_file);
+  BEGIN(0);
+  }
+}
+
 
 
 <INITOPERATOR>{TYPE} {
@@ -769,8 +891,7 @@ static inline void rmQuotes(char *str){
   }
 }
 
-
-<WILSONOP,TMOP>{
+<WILSONOP,TMOP,CLOVEROP>{
   {SPC}*UseEvenOdd{EQL}yes {
     if(myverbose) printf("  Use even/odd preconditioning line %d operator %d\n", line_of_file, current_operator);
     optr->even_odd_flag = 1;
@@ -880,9 +1001,16 @@ static inline void rmQuotes(char *str){
     if(myverbose) printf("  Solver set to BiCGstab line %d operator %d\n", line_of_file, current_operator);
     BEGIN(name_caller);
   }
+  bicg {
+    optr->solver=15;
+    if(myverbose) printf("  Solver set to BiCG line %d operator %d\n", line_of_file, current_operator);
+    BEGIN(name_caller);
+  }
+ 
   pcg {
     optr->solver=9;
-    if(myverbose) printf("  Solver set to PCG line %d operator %d\n", line_of_file, current_operator);
+    g_dflgcr_flag = 1;
+    if(myverbose) printf("  Solver set to DFL-PCG line %d operator %d\n", line_of_file, current_operator);
     BEGIN(name_caller);
   }
   gmres {
@@ -895,6 +1023,17 @@ static inline void rmQuotes(char *str){
     if(myverbose) printf("  Solver set to GCR line %d operator %d\n", line_of_file, current_operator);
     BEGIN(name_caller);
   }
+  mcr {
+    optr->solver=14;
+    if(myverbose) printf("  Solver set to mCR line %d operator %d\n", line_of_file, current_operator);
+    BEGIN(name_caller);
+  }
+  cr {
+    optr->solver=16;
+    if(myverbose) printf("  Solver set to CR line %d operator %d\n", line_of_file, current_operator);
+    BEGIN(name_caller);
+  }
+ 
   gmresdr {
     optr->solver=8;
     if(myverbose) printf("  Solver set to GMRES-DR line %d operator %d\n", line_of_file, current_operator);
@@ -933,23 +1072,27 @@ static inline void rmQuotes(char *str){
     BEGIN(name_caller);
   }
   increigcg {
-    optr->solver = 15;
+    optr->solver = 20;
     if(myverbose) printf("  Solver set to INCR-EIG-CG line %d operator %d\n", line_of_file, current_operator);
     BEGIN(name_caller);
   }
   arpackcg {
-    optr->solver = 16;
+    optr->solver = 22;
     if(myverbose) printf("  Solver set to ARPACKCG line %d operator %d\n", line_of_file, current_operator);
     BEGIN(name_caller);
   }
   arpack {
-    optr->solver = 17;
+    optr->solver = 23;
     if(myverbose) printf("  Solver set to ARPACK line %d operator %d\n", line_of_file, current_operator);
     BEGIN(name_caller);
   }
   polypreconcgher {
-    optr->solver = 18;
+    optr->solver = 24;
     if(myverbose) printf("  Solver set to POLYPRECONCGHER line %d operator %d\n", line_of_file, current_operator);
+  qsqfgmres {
+    optr->solver=18;
+    g_dflgcr_flag = 1;
+    if(myverbose) printf("  Solver set to DFL-FGMRES line %d operator %d\n", line_of_file, current_operator);
     BEGIN(name_caller);
   }
 }
@@ -957,23 +1100,29 @@ static inline void rmQuotes(char *str){
 
 <CSWSOLVER>{
   increigcg {
-    optr->solver = 15;
+    optr->solver = 20;
     if(myverbose) printf("  Solver set to INCR-EIG-CG line %d operator %d\n", line_of_file, current_operator);
     BEGIN(name_caller);
   }
   arpackcg {
-    optr->solver = 16;
+    optr->solver = 22;
     if(myverbose) printf("  Solver set to ARPACKCG line %d operator %d\n", line_of_file, current_operator);
     BEGIN(name_caller);
   }
   arpack {
-    optr->solver = 17;
+    optr->solver = 23;
     if(myverbose) printf("  Solver set to ARPACK line %d operator %d\n", line_of_file, current_operator);
     BEGIN(name_caller);
   }
   polypreconcgher {
-    optr->solver = 18;
+    optr->solver = 24;
     if(myverbose) printf("  Solver set to POLYPRECONCGHER line %d operator %d\n", line_of_file, current_operator);
+    BEGIN(name_caller);
+  }
+  dflfgmres {
+    optr->solver=11;
+    g_dflgcr_flag = 1;
+    if(myverbose) printf("  Solver set to DFL-FGMRES line %d operator %d\n", line_of_file, current_operator);
     BEGIN(name_caller);
   }
 }
@@ -981,7 +1130,7 @@ static inline void rmQuotes(char *str){
 
 <OVSOLVER>{
   sumr {
-    optr->solver = 13;
+    optr->solver = 21;
     if(myverbose) printf("  Solver set to SUMR line %d operator %d\n", line_of_file, current_operator);
     BEGIN(OVERLAPOP);
   }
@@ -991,6 +1140,7 @@ static inline void rmQuotes(char *str){
     BEGIN(OVERLAPOP);
   }
 }
+
 
 <INITMONOMIAL>{TYPE} {
   current_monomial++;
@@ -1425,11 +1575,17 @@ static inline void rmQuotes(char *str){
     mnl->solver = 1;
     BEGIN(solver_caller);
   }
-  bicgstab {
+  BICGSTAB {
     if(myverbose) printf("  Solver set to \"%s\" line %d monomial %d\n", yytext, line_of_file, current_monomial);
     mnl->solver = 0;
     BEGIN(solver_caller);
   }
+  MCR {
+    if(myverbose) printf("  Solver set to \"%s\" line %d monomial %d\n", yytext, line_of_file, current_monomial);
+    mnl->solver = 14;
+    BEGIN(solver_caller);
+  }
+
 }
 
 <GTYPE>{
@@ -2148,7 +2304,7 @@ static inline void rmQuotes(char *str){
 }
 
 
-<INITMONOMIAL,DETMONOMIAL,CLDETMONOMIAL,CLDETRATMONOMIAL,NDPOLYMONOMIAL,NDRATMONOMIAL,NDRATCORMONOMIAL,NDCLRATMONOMIAL,NDCLRATCORMONOMIAL,CLPOLYMONOMIAL,GAUGEMONOMIAL,INTEGRATOR,INITINTEGRATOR,INITMEASUREMENT,PIONNORMMEAS,ONLINEMEAS,ORIENTEDPLAQUETTESMEAS,INITOPERATOR,TMOP,DBTMOP,OVERLAPOP,WILSONOP,CLOVEROP,DBCLOVEROP,POLYMONOMIAL,PLOOP,INITGPU,GPU,RATMONOMIAL,RATCORMONOMIAL,CLRATMONOMIAL,CLRATCORMONOMIAL>{SPC}*\n   {
+<INITMONOMIAL,DETMONOMIAL,CLDETMONOMIAL,CLDETRATMONOMIAL,NDPOLYMONOMIAL,NDRATMONOMIAL,NDRATCORMONOMIAL,NDCLRATMONOMIAL,NDCLRATCORMONOMIAL,CLPOLYMONOMIAL,GAUGEMONOMIAL,INTEGRATOR,INITINTEGRATOR,INITMEASUREMENT,PIONNORMMEAS,ONLINEMEAS,ORIENTEDPLAQUETTESMEAS,INITOPERATOR,TMOP,DBTMOP,OVERLAPOP,WILSONOP,CLOVEROP,DBCLOVEROP,POLYMONOMIAL,PLOOP,INITGPU,GPU,RATMONOMIAL,RATCORMONOMIAL,CLRATMONOMIAL,CLRATCORMONOMIAL,INITDEFLATION,DEFLATION>{SPC}*\n   {
   line_of_file++;
 }
 <*>{SPC}*\n                       {
@@ -2231,6 +2387,22 @@ int read_input(char * conf_file){
   g_beta = _default_g_beta;
   g_N_s = _default_g_N_s;
   g_dflgcr_flag = _default_g_dflgcr_flag;
+
+  Msap_precon = _default_Msap_precon;
+  NiterMsap = _default_NiterMsap;
+  NcycleMsap = _default_NcycleMsap;
+  
+  NsmoothMsap_dflgen = _default_NsmoothMsap_dflgen;
+  NiterMsap_dflgen = _default_NiterMsap_dflgen;
+  NcycleMsap_dflgen = _default_NcycleMsap_dflgen;
+  use_iQ_dfl = _default_use_iQ_dfl;
+  usePL = _default_usePL;
+  little_solver_low_prec = _default_little_solver_low_prec;
+  little_solver_high_prec = _default_little_solver_high_prec;
+  little_evenodd = _default_little_evenodd;
+  little_solver = _default_little_solver;
+  little_gmres_m_parameter = _default_little_gmres_m_parameter;
+
   random_seed = _default_random_seed;
   rlxd_level = _default_rlxd_level;
   startoption = _default_startoption;
