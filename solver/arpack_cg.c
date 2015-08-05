@@ -222,7 +222,7 @@ int arpack_cg(
             READER *reader=NULL;
             uint64_t bytes;
 	    //sprintf(filename, "ev.%04d.%05d", nstore, i);
-	    sprintf(filename, "%s.%05d", basis_fname, i);
+	    sprintf(filename, "%s.%05d", basis_fname, j);
             construct_reader(&reader,filename); 
             DML_Checksum checksum;
 
