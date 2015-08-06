@@ -5,6 +5,12 @@ NrXProcs = 8
 NrYProcs = 8
 NrZProcs = 8
 
+NoBlocksX =2
+NoBlocksY =2
+NoBlocksZ =2
+NoBlocksT =2
+
+
 OmpNumThreads = 1
 
 
