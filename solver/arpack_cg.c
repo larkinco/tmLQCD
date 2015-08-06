@@ -96,8 +96,8 @@ int arpack_cg(
 
   //Static variables and arrays.
   static int ncurRHS=0;                  /* current number of the system being solved */                   
-  static void *_ax,*_r,*_tmps1,*_tmps2,*_zero_spinor;                  
-  static spinor *ax,*r,*tmps1,*tmps2,*zero_spinor;                  
+  static void *_ax,*_r,*_tmps1,*_tmps2,*_vec_even,*_vec_odd;                  
+  static spinor *ax,*r,*tmps1,*tmps2,*vec_even,*vec_odd;                  
   static _Complex double *evecs,*evals,*H,*HU,*Hinv,*initwork,*tmpv1;
   static _Complex double *zheev_work;
   static double *hevals,*zheev_rwork;
@@ -174,23 +174,35 @@ int arpack_cg(
     else
        {tmps2  = (spinor *) ( ((unsigned long int)(_tmps2)+ALIGN_BASE)&~ALIGN_BASE);}
 
-    _zero_spinor = malloc((LDN+ALIGN_BASE)*sizeof(spinor));
-    if(_zero_spinor==NULL)
+
+    _vec_even = malloc((LDN+ALIGN_BASE)*sizeof(spinor));
+    if(_vec_even==NULL)
     {
        if(g_proc_id == g_stdio_proc)
           fprintf(stderr,"insufficient memory for _zero_spinor inside arpack_cg.\n");
        exit(1);
     }
     else
-       {zero_spinor  = (spinor *) ( ((unsigned long int)(_tmps2)+ALIGN_BASE)&~ALIGN_BASE);}
+       {vec_even  = (spinor *) ( ((unsigned long int)(_tmps2)+ALIGN_BASE)&~ALIGN_BASE);}
 
+
+    _vec_odd = malloc((LDN+ALIGN_BASE)*sizeof(spinor));
+    if(_vec_odd==NULL)
+    {
+       if(g_proc_id == g_stdio_proc)
+          fprintf(stderr,"insufficient memory for _zero_spinor inside arpack_cg.\n");
+       exit(1);
+    }
+    else
+       {vec_odd  = (spinor *) ( ((unsigned long int)(_tmps2)+ALIGN_BASE)&~ALIGN_BASE);}
 
     #else
     ax = (spinor *) malloc(LDN*sizeof(spinor));
     r  = (spinor *) malloc(LDN*sizeof(spinor));
     tmps1 = (spinor *) malloc(LDN*sizeof(spinor));
     tmps2 = (spinor *) malloc(LDN*sizeof(spinor));
-    zero_spinor = (spinor *) malloc(LDN*sizeof(spinor));
+    vec_even = (spinor *) malloc(LDN*sizeof(spinor));  
+    vec_odd  = (spinor *) malloc(LDN*sizeof(spinor));
     
     if( (ax == NULL)  || (r==NULL) || (tmps1==NULL) || (tmps2==NULL) || (zero_spinor==NULL) )
     {
@@ -263,11 +275,19 @@ int arpack_cg(
                printf("# %s precision read (%d bits).\n", (prec == 64 ? "Double" : "Single") ,prec);
             }
 
-            if( (rstat = read_binary_spinor_data(zero_spinor, r, reader, &checksum)) != 0) {
+            if( (rstat = read_binary_spinor_data(vec_even,vec_odd, reader, &checksum)) != 0) {
               fprintf(stderr, "read_binary_spinor_data failed with return value %d", rstat);
               return(-7);
             }
-            assign_spinor_to_complex(&evecs[j*12*N],r,N); 
+
+            if(N==VOLUME) //solving the full system
+            {
+                convert_eo_to_lexic(r,vec_even,vec_odd);
+                assign_spinor_to_complex(&evecs[j*12*N],r,N);
+            }else{  //solving the eo preconditioned systems (only odd part of the eigenvector is computed)
+                assign_spinor_to_complex(&evecs[j*12*N],vec_odd,N);
+            }
+                 
 
             if (g_cart_id == 0 && g_debug_level >= 0) {
                  printf("# Scidac checksums for DiracFermion field %s:\n", filename);
@@ -336,7 +356,6 @@ int arpack_cg(
      }
 
      //compute Ritz values and Ritz vectors if needed
-     zero_spinor_field(zero_spinor,LDN); //this will be the even part of the eiegnvector (currently is zero)
      if( (nconv>0) && (comp_evecs !=0))
      {
          /* copy H into HU */
@@ -377,7 +396,9 @@ int arpack_cg(
             _FT(zgemv)(&cN,&tmpsize,&nconv,&tpone,evecs,&tmpsize,
 		       &HU[i*nconv],&ONE,&tzero,tmpv1,&ONE,1);
 
+      
             assign_complex_to_spinor(r,tmpv1,12*N);
+ 
       
             if(store_basis){
 
@@ -403,47 +424,16 @@ int arpack_cg(
 
 	       //memset(tmpv2, '\0', size*sizeof(_Complex double));
 	       //assign_complex_to_spinor(tmps2,tmpv2,size);
-	     
-	       int status = write_spinor(writer, &zero_spinor, &r, numb_flavs, precision);
+	       int status;
+               if(N==VOLUME){ //solving the full system
+                     convert_lexic_to_eo(vec_even,vec_odd,r);
+	             status = write_spinor(writer, &vec_even, &vec_odd, numb_flavs, precision);
+               }else{
+                     zero_spinor_field(vec_even,N);
+	             status = write_spinor(writer, &vec_even, &r, numb_flavs, precision);
+               }
 	       destruct_writer(writer);
        
-               ////////////////////////////////////////////////////////////////////////////
-               //char filename[500];  
-               //
-               //WRITER *writer=NULL;
-               //
-               //sprintf(filename, "%s.%.5d",basis_fname,i);
-               //
-               //construct_writer(&writer,filename,0); //0 means don't append
-               //
-               //char *buff=NULL;
-               //buff = (char *) malloc(512);
-               //uint64_t bytes;
-               //
-               //
-               //if(basis_prec==0)
-               //  prec = 32;
-               //else
-               //  prec = 64;
-
-               //sprintf(buff,"eigenvalue= %+e, precision= %d",hevals[i],prec);
-               //bytes = strlen(buff);
-
-               //writing first some clarifying message information
-               //#ifndef HAVE_LIBLEMON
-               //if(g_cart_id == 0) {
-               //#endif /* ! HAVE_LIBLEMON */
-               //   /*MB=ME=1*/
-               //   write_header(writer, 1, 1, "eigenvector-info", bytes);
-               //   write_message(writer, buff, bytes);
-               //   close_writer_record(writer);
-               //   free(buff);
-               //#ifndef HAVE_LIBLEMON
-               //}
-               //#endif /* ! HAVE_LIBLEMON */
-
-               //status = write_spinor(writer,&zero_spinor,&r,1,prec);
-               //destruct_writer(writer);
             } //if(store_basis)...
 
             d1=square_norm(r,N,parallel);
@@ -609,9 +599,9 @@ int arpack_cg(
   //free memory if this was your last system to solve
   if(ncurRHS == nrhs){
     #if ( (defined SSE) || (defined SSE2) || (defined SSE3)) 
-    free(_ax);  free(_r);  free(_tmps1); free(_tmps2);
+    free(_ax);  free(_r);  free(_tmps1); free(_tmps2); free(_vec_even); free(_vec_odd);
     #else
-    free(ax); free(r); free(tmps1); free(tmps2);
+    free(ax); free(r); free(tmps1); free(tmps2); free(vec_even); free(vec_odd);
     #endif
     free(evecs); free(evals); free(H); free(HU); free(Hinv);
     free(initwork); free(tmpv1); free(zheev_work);
