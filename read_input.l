@@ -1072,22 +1072,22 @@ static inline void rmQuotes(char *str){
     BEGIN(name_caller);
   }
   increigcg {
-    optr->solver = 20;
+    optr->solver = 19;
     if(myverbose) printf("  Solver set to INCR-EIG-CG line %d operator %d\n", line_of_file, current_operator);
     BEGIN(name_caller);
   }
   arpackcg {
-    optr->solver = 22;
+    optr->solver = 21;
     if(myverbose) printf("  Solver set to ARPACKCG line %d operator %d\n", line_of_file, current_operator);
     BEGIN(name_caller);
   }
   arpack {
-    optr->solver = 23;
+    optr->solver = 22;
     if(myverbose) printf("  Solver set to ARPACK line %d operator %d\n", line_of_file, current_operator);
     BEGIN(name_caller);
   }
   polypreconcgher {
-    optr->solver = 24;
+    optr->solver = 23;
     if(myverbose) printf("  Solver set to POLYPRECONCGHER line %d operator %d\n", line_of_file, current_operator);
     BEGIN(name_caller);
   }
@@ -1102,22 +1102,22 @@ static inline void rmQuotes(char *str){
 
 <CSWSOLVER>{
   increigcg {
-    optr->solver = 20;
+    optr->solver = 19;
     if(myverbose) printf("  Solver set to INCR-EIG-CG line %d operator %d\n", line_of_file, current_operator);
     BEGIN(name_caller);
   }
   arpackcg {
-    optr->solver = 22;
+    optr->solver = 21;
     if(myverbose) printf("  Solver set to ARPACKCG line %d operator %d\n", line_of_file, current_operator);
     BEGIN(name_caller);
   }
   arpack {
-    optr->solver = 23;
+    optr->solver = 22;
     if(myverbose) printf("  Solver set to ARPACK line %d operator %d\n", line_of_file, current_operator);
     BEGIN(name_caller);
   }
   polypreconcgher {
-    optr->solver = 24;
+    optr->solver = 23;
     if(myverbose) printf("  Solver set to POLYPRECONCGHER line %d operator %d\n", line_of_file, current_operator);
     BEGIN(name_caller);
   }
@@ -1132,7 +1132,7 @@ static inline void rmQuotes(char *str){
 
 <OVSOLVER>{
   sumr {
-    optr->solver = 21;
+    optr->solver = 20;
     if(myverbose) printf("  Solver set to SUMR line %d operator %d\n", line_of_file, current_operator);
     BEGIN(OVERLAPOP);
   }
