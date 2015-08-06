@@ -180,6 +180,32 @@ int invert_clover_eo(spinor * const Even_new, spinor * const Odd_new,
 
       Qm(g_spinor_field[DUM_DERI+1], g_spinor_field[DUM_DERI]);
     }
+    else if(solver_flag == ARPACKCG) {
+      if(g_proc_id == 0) {printf("# Using ARPACKCG!\n"); fflush(stdout);}
+      gamma5(g_spinor_field[DUM_DERI+1], g_spinor_field[DUM_DERI], VOLUME);
+      iter = arpack_cg(VOLUME,solver_params.arpackcg_nrhs,solver_params.arpackcg_nrhs1, g_spinor_field[DUM_DERI], g_spinor_field[DUM_DERI+1],Qsq,
+                              solver_params.arpackcg_eps_sq1,precision,solver_params.arpackcg_res_eps_sq,rel_prec,max_iter,
+                              solver_params.arpackcg_nev,solver_params.arpackcg_ncv,solver_params.arpackcg_eig_tol,solver_params.arpackcg_eig_maxiter,
+                              solver_params.arpackcg_evals_kind,solver_params.arpackcg_comp_evecs,solver_params.use_acc,
+                              solver_params.cheb_k,solver_params.op_evmin,solver_params.op_evmax,
+                              solver_params.arpackcg_read_basis, solver_params.arpackcg_store_basis,
+                              solver_params.arpackcg_basis_fname,solver_params.arpackcg_basis_prec,
+                              solver_params.arpack_logfile);
+      Qm(g_spinor_field[DUM_DERI+1], g_spinor_field[DUM_DERI]);
+    }
+    else if(solver_flag == ARPACK) {
+      if(g_proc_id == 0) {printf("# Using ARPACK!\n"); fflush(stdout);}
+      gamma5(g_spinor_field[DUM_DERI+1], g_spinor_field[DUM_DERI], VOLUME);
+      iter = arpack(VOLUME, Qsq,
+                    solver_params.arpackcg_nev,solver_params.arpackcg_ncv,
+                    solver_params.arpackcg_eig_tol,solver_params.arpackcg_eig_maxiter,
+                    solver_params.arpackcg_evals_kind,solver_params.use_acc,
+                    solver_params.cheb_k,solver_params.op_evmin,solver_params.op_evmax,
+                    solver_params.arpackcg_store_basis,
+                    solver_params.arpackcg_basis_fname,solver_params.arpackcg_basis_prec,
+                    solver_params.arpack_logfile);
+      Qm(g_spinor_field[DUM_DERI+1], g_spinor_field[DUM_DERI]);
+    }
     convert_lexic_to_eo(Even_new, Odd_new, g_spinor_field[DUM_DERI+1]);
   }
   return(iter);
