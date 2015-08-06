@@ -785,7 +785,7 @@ static inline void rmQuotes(char *str){
     (optr->solver_params).arpackcg_basis_prec = a;
     if(myverbose) printf("  ARPACK basis reading/writing precision option set to   %d line %d operator %d\n", a, line_of_file, current_operator);
   }
-  {SPC}*ARPACBasisFileName{EQL}{FILENAME}+ {
+  {SPC}*ARPACKBasisFileName{EQL}{FILENAME}+ {
     sscanf(yytext, " %[a-zA-Z] = %s", name, fname);
     strncpy( (optr->solver_params).arpackcg_basis_fname, fname, strlen(fname)) ;
     if(myverbose) printf("  ARPACKCG basis file name is  set to %s line %d operator %d\n", fname, line_of_file, current_operator);
