@@ -129,7 +129,7 @@ int mrblk(spinor * const P, spinor * const Q, spinor * const s_,
 
   r = s[0];
   norm_r = square_norm(Q, N, parallel);
-
+  
   zero_spinor_field(P, N);
   f(s[2], P, blk);
   diff(r, Q, s[2], N);
@@ -152,6 +152,7 @@ int mrblk(spinor * const P, spinor * const Q, spinor * const s_,
     else{
       assign_add_mul(s[2], s[1], alpha, N);
     }
+    
     diff(r, Q, s[2], N);
     norm_r = square_norm(r, N, parallel);
     if(g_proc_id == g_stdio_proc && g_debug_level > 2 && blk == 0) {
