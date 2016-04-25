@@ -754,7 +754,7 @@ int arpack(
   vec_even = (spinor *) malloc(LDN*sizeof(spinor));
   vec_odd  = (spinor *) malloc(LDN*sizeof(spinor));
     
-  if( (ax == NULL)  || (r==NULL) || (tmps1==NULL) || (tmps2==NULL) || (vec_even==NULL) || (vec_odd==NUL))
+  if( (ax == NULL)  || (r==NULL) || (tmps1==NULL) || (tmps2==NULL) || (vec_even==NULL) || (vec_odd==NULL))
   {
     if(g_proc_id == g_stdio_proc)
        fprintf(stderr,"insufficient memory for ax,r,tmps1,tmps2,zero_spinor inside arpack.\n");
