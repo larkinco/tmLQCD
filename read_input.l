@@ -143,6 +143,7 @@ static inline void rmQuotes(char *str){
   double eigenvalue_precision;
   int sub_evs_cg_flag;
   int even_odd_flag;
+  int top_suscept_exact_flag;  
   int bc_flag;
   int online_measurement_flag;
   int online_measurement_freq;
@@ -242,6 +243,7 @@ static inline void rmQuotes(char *str){
 %x NOEV
 %x PRECEV
 %x EO
+%x TOPSUSEXACT
 %x BC
 %x WRPROPFLAG
 %x PROPTYPE
@@ -377,6 +379,7 @@ static inline void rmQuotes(char *str){
 ^ComputeEVs{EQL}                   BEGIN(COMPUTEEVS);
 ^SourceLocation{EQL}               BEGIN(SRCLOC);
 ^UseEvenOdd{EQL}                   BEGIN(EO);
+^ComputeExactTopSus{EQL}           BEGIN(TOPSUSEXACT);
 ^Bc{EQL}                           BEGIN(BC);
 ^WritePropagatorFormat{EQL}        BEGIN(WRPROPFLAG);
 ^PropagatorType{EQL}               BEGIN(WRPROPFLAG);
@@ -2248,6 +2251,14 @@ static inline void rmQuotes(char *str){
   even_odd_flag = 0;
   if(myverbose) printf("Do not use even/odd preconditioning\n");
 }
+<TOPSUSEXACT>yes {
+  top_suscept_exact_flag=1;
+  if(myverbose!=0) printf("Compute Topological Susceptibility using Exact Eigenspectrum.\n");
+}
+<TOPSUSEXACT>no {
+  top_suscept_exact_flag=0;
+  if(myverbose!=0) printf("Do not compute Topological Susceptibility using Exact Eigenspectrum.\n");
+}
 <BC>yes {
   bc_flag = 1;
   if(verbose) printf("Schroedinger Functional bc\n");
@@ -2460,7 +2471,8 @@ int read_input(char * conf_file){
   no_eigenvalues = _default_no_eigenvalues;
   sub_evs_cg_flag = _default_sub_evs_cg_flag;
   phmc_exact_poly = _default_phmc_exact_poly;
-  even_odd_flag = _default_even_odd_flag;
+  even_odd_flag = _default_even_odd_flag; 
+  top_suscept_exact_flag = _default_top_suscept_exact_flag;
   bc_flag = _default_bc_flag;
   SourceInfo.type = _default_source_type_flag;
   no_samples = _default_no_samples;
