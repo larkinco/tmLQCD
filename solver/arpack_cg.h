@@ -77,7 +77,8 @@ int arpack_cg(
      int basis_prec,               /*(IN)precision used to write the basis vectors
                                          0 single precision
                                          1 double precision*/
-     char *arpack_logfile           /*(IN) file name to be used for printing out debugging information from arpack*/
+     char *arpack_logfile,           /*(IN) file name to be used for printing out debugging information from arpack*/
+     int top_suscept_exact_flag
      );
 
 
@@ -112,7 +113,9 @@ int arpack(
      int basis_prec,               /*(IN)precision used to write the basis vectors
                                          0 single precision
                                          1 double precision*/
-     char *arpack_logfile           /*(IN) file name to be used for printing out debugging information from arpack*/
-     );
+     char *arpack_logfile,           /*(IN) file name to be used for printing out debugging information from arpack*/
+     int top_suscept_exact_flag
+
+	);
 
 #endif 

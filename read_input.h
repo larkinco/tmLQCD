@@ -85,6 +85,7 @@ extern "C"
   extern int source_location;
   extern int sub_evs_cg_flag;
   extern int even_odd_flag;
+  extern int top_suscept_exact_flag;
   extern int bc_flag;
   extern int online_measurement_flag;
   extern int online_measurement_freq;

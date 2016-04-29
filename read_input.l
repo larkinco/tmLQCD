@@ -894,6 +894,7 @@ static inline void rmQuotes(char *str){
   }
 }
 
+
 <WILSONOP,TMOP,CLOVEROP>{
   {SPC}*UseEvenOdd{EQL}yes {
     if(myverbose) printf("  Use even/odd preconditioning line %d operator %d\n", line_of_file, current_operator);
@@ -904,6 +905,11 @@ static inline void rmQuotes(char *str){
     optr->even_odd_flag = 0;
   }
 }
+
+
+
+
+
 
 <DBTMOP,DBCLOVEROP>{
   {SPC}*2KappaMubar{EQL}{FLT} {
@@ -2472,7 +2478,7 @@ int read_input(char * conf_file){
   sub_evs_cg_flag = _default_sub_evs_cg_flag;
   phmc_exact_poly = _default_phmc_exact_poly;
   even_odd_flag = _default_even_odd_flag; 
-  top_suscept_exact_flag = _default_top_suscept_exact_flag;
+  /*top_suscept_exact_flag = _default_top_suscept_exact_flag;*/
   bc_flag = _default_bc_flag;
   SourceInfo.type = _default_source_type_flag;
   no_samples = _default_no_samples;
