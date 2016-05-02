@@ -1111,9 +1111,9 @@ int arpack(
 				{ 
 					//									printf("WE ARE INSIDE");	
 					printf("%d %.10e %.10e \n",i,creal(top_suscept[i-1]),cimag(top_suscept[i-1]));
-					printf("Q_sqred1 %d %.10e %.10e \n",i,creal(Q_sqred1),cimag(Q_sqred1));
-					printf("Q_sqred2 %d %.10e %.10e \n",i,creal(Q_sqred2),cimag(Q_sqred2));
-					printf("renrm_top_sus %d %.10e %.10e \n",i,creal(renrm_top_sus),cimag(renrm_top_sus));
+					printf("n Q_sqred1 %d %.10e %.10e \n",i,creal(Q_sqred1),cimag(Q_sqred1));
+					printf("n Q_sqred2 %d %.10e %.10e \n",i,creal(Q_sqred2),cimag(Q_sqred2));
+				//	printf("n renrm_top_sus %d %.10e %.10e \n",i,creal(renrm_top_sus),cimag(renrm_top_sus));
 				}		
 			}
 			free(top_suscept);

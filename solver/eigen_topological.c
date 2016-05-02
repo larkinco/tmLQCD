@@ -9,19 +9,20 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-_Complex double top_suscept_all_eigvcs(eigen_field* eigf)
+_Complex double top_suscept_all_eigvcs( eigen_field* eigf)
 {
     return top_suscept_subset( eigf,eigf->nevs);
 }
 
-
-_Complex double top_suscept_subset(eigen_field* eigf,int max_nevs){
+//change this so subset calls the main one with a new structure
+_Complex double top_suscept_subset( eigen_field* eigf,int max_nevs){
 
     int rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     int eo_multiple =2; //1 was used for testing purposes when only even-odd e-vectors available
 
     int saved_nevs =eigf->nevs;
+   // eigen_field eigf =ef;
     if(max_nevs<eigf->nevs)
     {
         eigf->nevs= max_nevs;
@@ -58,11 +59,13 @@ _Complex double top_suscept_subset(eigen_field* eigf,int max_nevs){
 }
 
 
-_Complex double top_suscept_product_print(eigen_field* eigf,int max_nevs){
+_Complex double top_suscept_product_print(eigen_field*  eigf,int max_nevs){
 
     int rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     int eo_multiple =2; //1 was used for testing purposes when only even-odd e-vectors available
+
+    //eigen_field eigf = eigf;
 
     int saved_nevs =eigf->nevs;
     if(max_nevs<eigf->nevs)
@@ -110,7 +113,7 @@ _Complex double top_suscept_product_print(eigen_field* eigf,int max_nevs){
     return 1;
 }
 
-void eigen_field_init(_Complex double *evcs, double *evls,int nevs,int lvol,eigen_field* ef)
+void eigen_field_init( _Complex double*  evcs, double* evls,int nevs,int lvol,eigen_field* ef)
 {
   ef->evcs = evcs;
   ef->evls =  evls;
@@ -227,13 +230,14 @@ _Complex double* local_eigvecs_g5_in_prod(const eigen_field* const eigf,int eo_m
 	return C_top_matrix;
 }
 
-_Complex double Q_squared_1(eigen_field* eigf,int max_nevs){
+_Complex double Q_squared_1( eigen_field*  eigf,int max_nevs){
 
 	int rank;
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 	int eo_multiple =2; /*1 was used for testing purposes when only even-odd e-vectors available*/
 
 	int saved_nevs =eigf->nevs;
+	//eigen_field eigf=ef;
 	if(max_nevs<eigf->nevs)
 	{
 		eigf->nevs= max_nevs;
@@ -257,23 +261,27 @@ _Complex double Q_squared_1(eigen_field* eigf,int max_nevs){
 	_Complex double diag_sum=0 +0*_Complex_I;
 	for(int i =0;i<eigf->nevs;++i)
 	{
-		_Complex double* ptr = global_i_j_eig_prod+i*eigf->nevs;
+		_Complex double* ptr = global_i_j_eig_prod+i*eigf->nevs+ i;
 		//full_sum+= conj(*ptr)*(*ptr);
 		diag_sum+=*ptr;
 	}
+
+	eigf->nevs=saved_nevs;
 	free(local_eig_product);
 	free(global_i_j_eig_prod);
 	return (diag_sum*diag_sum);
 }
 
 
-_Complex double Q_squared_2(eigen_field* eigf,int max_nevs){
+_Complex double Q_squared_2(eigen_field*  eigf,int max_nevs){
 
 	int rank;
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 	int eo_multiple =2; /*1 was used for testing purposes when only even-odd e-vectors available*/
 
 	int saved_nevs =eigf->nevs;
+//	eigen_field eigf=ef;
+	
 	if(max_nevs<eigf->nevs)
 	{
 		eigf->nevs= max_nevs;
@@ -300,17 +308,20 @@ _Complex double Q_squared_2(eigen_field* eigf,int max_nevs){
 		_Complex double* ptr = global_eig_product+i;
 		diag_sum+=*ptr;
 	}
+	
+	eigf->nevs =saved_nevs;
 	free(local_eig_product);
 	free(global_eig_product);
 	return (diag_sum*diag_sum);
 }
-
+/*
 _Complex double renorm_top_suscept_alt(eigen_field* eigf,int max_nevs){
 
 	int rank;
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-	int eo_multiple =2; /*1 was used for testing purposes when only even-odd e-vectors available*/
+	int eo_multiple =2; //1 was used for testing purposes when only even-odd e-vectors available
 
+//	eigen_field eigf=ef;
 	int saved_nevs =eigf->nevs;
 	if(max_nevs<eigf->nevs)
 	{
@@ -329,7 +340,7 @@ _Complex double renorm_top_suscept_alt(eigen_field* eigf,int max_nevs){
 	}
 
 	MPI_Allreduce(local_eig_product, global_i_j_eig_prod, 2*eigf->nevs*eigf->nevs, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-	/*  MPI_Allreduce(&local_trace,&global_trace, 2, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);*/
+// MPI_Allreduce(&local_trace,&global_trace, 2, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
 	_Complex double full_sum=0 +0*_Complex_I;
 	_Complex double diag_sum=0 +0*_Complex_I;
@@ -343,12 +354,14 @@ _Complex double renorm_top_suscept_alt(eigen_field* eigf,int max_nevs){
 			}
 		}
 	}
+
+	eigf->nevs=saved_nevs;
 	free(local_eig_product);
 	free(global_i_j_eig_prod);
 	return eigf->nevs*(diag_sum*diag_sum)/full_sum;
 }
 
-
+*/
 
 _Complex double local_g5_self_in_prod2(const _Complex double* const evcs, const int N){
 
