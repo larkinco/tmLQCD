@@ -102,7 +102,9 @@ _Complex double top_suscept_product_print(eigen_field*  eigf,int max_nevs){
 
         for(int i=0;i<eigf->nevs;i++)
         {
-            fprintf(fp,"%d %.10e %.10e \n",i,creal(*(global_eig_product+i)),cimag(*(global_eig_product+i)));
+            fprintf(fp,"%d %.10e %.10e Eigenvalue %.10e \n",i,creal(*(global_eig_product+i)),cimag(*(global_eig_product+i)),*(eigf->evls+i));
+//            printf("Product %d %.10e %.10e Eigenvalue %.10e \n",i,creal(*(global_eig_product+i)),cimag(*(global_eig_product+i)),*(eigf->evls+i));
+            printf("Product %d %.10e %.10e Eigenvalue %.10e \n",i,creal(*(global_eig_product+i)),cimag(*(global_eig_product+i)),*(eigf->evls+i));
         }
 
         fclose(fp);

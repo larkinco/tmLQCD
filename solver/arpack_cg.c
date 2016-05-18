@@ -552,6 +552,7 @@ int arpack_cg(
 						printf("%d %.10e %.10e \n",i,creal(top_suscept[i-1]),cimag(top_suscept[i-1]));
 
 					}		
+				_Complex double temp= top_suscept_product_print(&eigf,nconv);	
 				}
 				free(top_suscept);
 			}
@@ -1104,18 +1105,19 @@ int arpack(
 				double x=0.005501;
 				top_suscept[i-1] = top_suscept[i-1]*pow(x,6);
 				
-				_Complex double Q_sqred2=Q_squared_2(&eigf, i);
-				_Complex double Q_sqred1=Q_squared_1(&eigf, i);
-				_Complex double renrm_top_sus=renorm_top_suscept_alt(&eigf,i);
+			//	_Complex double Q_sqred2=Q_squared_2(&eigf, i-1);
+			//	_Complex double Q_sqred1=Q_squared_1(&eigf, i-1);
+				//_Complex double renrm_top_sus=renorm_top_suscept_alt(&eigf,i);
 				if(g_proc_id == g_stdio_proc)
 				{ 
 					//									printf("WE ARE INSIDE");	
 					printf("%d %.10e %.10e \n",i,creal(top_suscept[i-1]),cimag(top_suscept[i-1]));
-					printf("n Q_sqred1 %d %.10e %.10e \n",i,creal(Q_sqred1),cimag(Q_sqred1));
-					printf("n Q_sqred2 %d %.10e %.10e \n",i,creal(Q_sqred2),cimag(Q_sqred2));
+			//		printf("n Q_sqred1 %d %.10e %.10e \n",i,creal(Q_sqred1),cimag(Q_sqred1));
+			//		printf("n Q_sqred2 %d %.10e %.10e \n",i,creal(Q_sqred2),cimag(Q_sqred2));
 				//	printf("n renrm_top_sus %d %.10e %.10e \n",i,creal(renrm_top_sus),cimag(renrm_top_sus));
 				}		
 			}
+			_Complex double temp= top_suscept_product_print(&eigf,nconv);
 			free(top_suscept);
 		}
 		/////////////////////////////////////////////// 
