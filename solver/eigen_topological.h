@@ -16,7 +16,7 @@ typedef struct {
 //#include <complex.h>
 //#include <qhg_eigen_field.h>
 _Complex double top_suscept_subset(  eigen_field*   eigf,int max_nevs);
-_Complex double top_suscept_product_print( eigen_field*  eigf,int max_nevs);
+_Complex double top_suscept_product_print( eigen_field*  eigf,int max_nevs,char *v_g5_logfile);
 
 void eigen_field_init(_Complex double*  evcs,double* evls,int nevs,int lvol,eigen_field* ef);
 

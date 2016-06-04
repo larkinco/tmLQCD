@@ -127,7 +127,7 @@ int invert_clover_eo(spinor * const Even_new, spinor * const Odd_new,
                         solver_params.cheb_k,solver_params.op_evmin,solver_params.op_evmax,
                         solver_params.arpackcg_store_basis,
                         solver_params.arpackcg_basis_fname,solver_params.arpackcg_basis_prec,
-                        solver_params.arpack_logfile,solver_params.top_suscept_exact_flag);
+                        solver_params.arpack_logfile,solver_params.top_suscept_exact_flag, solver_params.v_g5_logfile);
 
 
        Qm(Odd_new, Odd_new);
@@ -204,7 +204,7 @@ int invert_clover_eo(spinor * const Even_new, spinor * const Odd_new,
                     solver_params.cheb_k,solver_params.op_evmin,solver_params.op_evmax,
                     solver_params.arpackcg_store_basis,
                     solver_params.arpackcg_basis_fname,solver_params.arpackcg_basis_prec,
-                    solver_params.arpack_logfile,solver_params.top_suscept_exact_flag);
+                    solver_params.arpack_logfile,solver_params.top_suscept_exact_flag,solver_params.v_g5_logfile);
       Qm(g_spinor_field[DUM_DERI+1], g_spinor_field[DUM_DERI]);
     }
     convert_lexic_to_eo(Even_new, Odd_new, g_spinor_field[DUM_DERI+1]);

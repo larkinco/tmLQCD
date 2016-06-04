@@ -92,7 +92,9 @@ int arpack_cg(
 						0 single precision
 						1 double precision*/
 		char *arpack_logfile,           /*(IN) file name to be used for printing out debugging information from arpack*/		
-		int top_suscept_exact_flag				
+		int top_suscept_exact_flag,
+		char *v_g5_logfile	/* saving 	*/			
+
 )
 { 
 
@@ -552,7 +554,7 @@ int arpack_cg(
 						printf("%d %.10e %.10e \n",i,creal(top_suscept[i-1]),cimag(top_suscept[i-1]));
 
 					}		
-				_Complex double temp= top_suscept_product_print(&eigf,nconv);	
+				_Complex double temp= top_suscept_product_print(&eigf,nconv,v_g5_logfile);	
 				}
 				free(top_suscept);
 			}
@@ -753,7 +755,9 @@ int arpack(
 						0 single precision
 						1 double precision*/
 		char *arpack_logfile,           /*(IN) file name to be used for printing out debugging information from arpack*/
-		int top_suscept_exact_flag				
+		int top_suscept_exact_flag,
+		
+		char *v_g5_logfile				
 		)
 { 
 
@@ -1117,7 +1121,7 @@ int arpack(
 				//	printf("n renrm_top_sus %d %.10e %.10e \n",i,creal(renrm_top_sus),cimag(renrm_top_sus));
 				}		
 			}
-			_Complex double temp= top_suscept_product_print(&eigf,nconv);
+			_Complex double temp= top_suscept_product_print(&eigf,nconv,v_g5_logfile);
 			free(top_suscept);
 		}
 		/////////////////////////////////////////////// 

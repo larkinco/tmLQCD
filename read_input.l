@@ -793,6 +793,11 @@ static inline void rmQuotes(char *str){
     strncpy( (optr->solver_params).arpackcg_basis_fname, fname, strlen(fname)) ;
     if(myverbose) printf("  ARPACKCG basis file name is  set to %s line %d operator %d\n", fname, line_of_file, current_operator);
   }
+  {SPC}*EigenvectorG5ProductLogFile{EQL}{FILENAME}+ {
+    sscanf(yytext, " %[a-zA-Z] = %s", name, fname);
+    strncpy( (optr->solver_params).v_g5_logfile, fname, strlen(fname)) ;
+    if(myverbose) printf("  EigenvectorG5Product  name is  set to %s line %d operator %d\n", fname, line_of_file, current_operator);
+  }
   {SPC}*ARPACKLogFile{EQL}{FILENAME}+ {
     sscanf(yytext, " %[a-zA-Z] = %s", name, fname);
     strncpy( (optr->solver_params).arpack_logfile, fname, strlen(fname)) ;

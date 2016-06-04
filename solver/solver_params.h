@@ -92,8 +92,13 @@ typedef struct {
    int cheb_k; //order of the polynomial used is k+1 and the lowest value is k=-1 which correspond to T_0
    double op_evmin;  /*lowest boundary of the interval for the polynomial acceleration*/
    double op_evmax;  /*highest boundary for the interval for the polynomial acceleration*/
-   int top_suscept_exact_flag; 
-   
+    //////////////////////////////////////////
+    ////////Topological params 
+    ////////////////////////////////
+
+   int top_suscept_exact_flag;    
+   char v_g5_logfile[500]; //file for topological output
+
 } solver_params_t;
 
 

@@ -59,7 +59,7 @@ _Complex double top_suscept_subset( eigen_field* eigf,int max_nevs){
 }
 
 
-_Complex double top_suscept_product_print(eigen_field*  eigf,int max_nevs){
+_Complex double top_suscept_product_print(eigen_field*  eigf,int max_nevs,char *v_g5_logfile){
 
     int rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -97,7 +97,8 @@ _Complex double top_suscept_product_print(eigen_field*  eigf,int max_nevs){
     {
         FILE * fp;
 
-        fp = fopen ("v_g5_product.txt", "w+");
+     //   fp = fopen ("v_g5_product.txt", "w+");
+        fp = fopen (v_g5_logfile, "w+");
 
 
         for(int i=0;i<eigf->nevs;i++)
