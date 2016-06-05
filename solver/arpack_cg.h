@@ -78,8 +78,9 @@ int arpack_cg(
                                          0 single precision
                                          1 double precision*/
      char *arpack_logfile,           /*(IN) file name to be used for printing out debugging information from arpack*/
-     int top_suscept_exact_flag
-     );
+     int top_suscept_exact_flag,
+	char *v_g5_logfile     
+);
 
 
 //solver to compute eigenvectors only

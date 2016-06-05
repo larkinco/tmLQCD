@@ -77,7 +77,7 @@ _Complex double top_suscept_product_print(eigen_field*  eigf,int max_nevs,char *
 
     _Complex double* global_eig_product =malloc(sizeof(_Complex double)*eigf->nevs);
 
-    
+
     if(global_eig_product==NULL)
     {
 	if(rank == 0){
@@ -96,10 +96,10 @@ _Complex double top_suscept_product_print(eigen_field*  eigf,int max_nevs,char *
     if(rank==0)
     {
         FILE * fp;
-
+	printf("The eigenvalue logfile is %s | ", v_g5_logfile);
      //   fp = fopen ("v_g5_product.txt", "w+");
         fp = fopen (v_g5_logfile, "w+");
-
+	
 
         for(int i=0;i<eigf->nevs;i++)
         {
@@ -416,3 +416,43 @@ _Complex double local_g5_in_prod(const _Complex double* const evcs_i,const _Comp
     }
     return real_part + _Complex_I*imag_part;
 }
+
+_Complex double v_g5_product_compute(_Complex double* evec,int lvol){
+
+    eigen_field eigf;
+    eigen_field_init(evec,NULL,1,lvol,&eigf);   
+
+    _Complex double* local_eig_product =local_eigvecs_g5_self_in_prod(&eigf,2);
+
+    _Complex double global_eig_product =0;
+
+    MPI_Allreduce(local_eig_product,&global_eig_product, 2, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+
+    free(local_eig_product);
+    return global_eig_product;
+
+}
+void v_g5_product_print(_Complex double* v_g5_product,double* evals, int nconv,char* v_g5_logfile){
+
+    int rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+     
+    if(rank==0)
+    {
+        FILE * fp;
+	printf("The eigenvalue logfile is %s | ", v_g5_logfile);
+     //   fp = fopen ("v_g5_product.txt", "w+");
+        fp = fopen (v_g5_logfile, "w+");
+	
+
+        for(int i=0;i<nconv;i++)
+        {
+            fprintf(fp,"%d %.10e %.10e Eigenvalue %.10e \n",i,creal(*(v_g5_product+i)),cimag(*(v_g5_product+i)),*(evals+i));
+            printf("V_G5_Product: %d %.10e %.10e Eigenvalue %.10e \n",i,creal(*(v_g5_product+i)),cimag(*(v_g5_product+i)),*(evals+i));
+        }
+
+        fclose(fp);
+    }
+}
+
+

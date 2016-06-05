@@ -778,6 +778,7 @@ int arpack(
 	double d1,d2,d3;
 	double et1,et2;  //timing variables
 	_Complex double* ef_evs=NULL;
+	_Complex double* v_g5_product=NULL;
 	int prec,status,rstat;
 
 	int parallel;        /* for parallel processing of the scalar products */
@@ -980,17 +981,17 @@ int arpack(
 		//printf("WE ARE HERE");
 		if(N==VOLUME&&top_suscept_exact_flag==1)
 		{
-			ef_evs =  malloc(nconv*12*N*sizeof(_Complex double)); //note: no extra buffer 
+			ef_evs =  malloc(nconv*12*N*sizeof(_Complex double)); 
 			//CHECK NOT NULL
-
-			if(ef_evs==NULL)
+			v_g5_product =  malloc(nconv*sizeof(_Complex double)); 
+		
+			if(ef_evs==NULL||v_g5_product==NULL)
 			{
 				if(g_proc_id == g_stdio_proc)
-					fprintf(stderr,"insufficient memory for ef_evs inside invert.\n");
+					fprintf(stderr,"insufficient memory for ef_evs or v_g5_product inside invert.\n");
 				exit(1);
 			}
 		}
-
 
 		for(i=0; i<nconv; i++)
 		{
@@ -998,9 +999,14 @@ int arpack(
 			_FT(zgemv)(&cN,&tmpsize,&nconv,&tpone,evecs,&tmpsize,
 					&HU[i*nconv],&ONE,&tzero,tmpv1,&ONE,1); //tmpv1 IS the output, rest are input, multiplies, tempv1 = evecs*HU[i*nconv] + 0
 
+
+			/******************** COMPUTE V_G5_PRODUCT OF tmpv1 and put into array *********/
+			
 			if(N==VOLUME&&top_suscept_exact_flag==1)
 			{
 				memcpy(ef_evs+tmpsize*i,tmpv1,tmpsize*sizeof(_Complex double)); //memcopying all individual eigenvectors into our full converged eigenvector array used in topological calculation. This is done to require minimum changing of the working code to minimise testing time. 
+				*(v_g5_product+i)=v_g5_product_compute(tmpv1,N);
+
 			}
 
 			assign_complex_to_spinor(r,tmpv1,12*N);
@@ -1057,42 +1063,14 @@ int arpack(
 			{fprintf(stdout,"Eval[%06d]: %22.15E rnorm: %22.15E\n", i, hevals[i], d3); fflush(stdout);}
 		}
 
-		/////////////////////////////////////////////// 
-		/////////////////////////////////////////////// 
-		//CHECK EVEN ODD AND TOPOLOGICA SUSCEPT FLAG AND IF BOTH TRUE RUN
-		/*char top_filename[] = "/homec/ecy00/ecy002/Conor/Runs/top_output.txt";
-		  int top_suscept_exact_flag=1;//temp for testing
-		//	printf("WE ARE HERE");
-		if(N==VOLUME&&top_suscept_exact_flag==1)
-		{
-		//	printf("WE ARE INSIDE");
-
-		if(g_proc_id == g_stdio_proc)
-		{ 	
-		//eigen_helloworld();
-		printf("WE ARE INSIDE %d", N);
-		FILE * outputfile;
-		outputfile = fopen (top_filename, "r+");
-		fprintf(outputfile,"helloworld");
-		fclose(outputfile);
-		}		
-		}
-		*/
-
-		//	int top_suscept_exact_flag=1;//temp for testing
-		//printf("WE ARE HERE");
-		//printf("THE value of top flag is %d.",top_suscept_exact_flag);
 		if(N==VOLUME&&top_suscept_exact_flag==1)
 		{
 
 			eigen_field eigf;//CHECK EIGN NUM
 			eigen_field_init(ef_evs,hevals,nconv,N,&eigf);//Change evecs to new eigenvector array
-
-			//	_Complex double final_answer[400];
-			//	int n_eig=nconv;
 			if(g_proc_id == g_stdio_proc)
 			{ 
-				printf("WE ARE INSide top if statement, before allocation and calculation");	
+		//		printf("WE ARE INSide top if statement, before allocation and calculation");	
 			}
 			_Complex double* top_suscept= malloc(sizeof(_Complex double)*nconv);
 			if(top_suscept==NULL)
@@ -1106,7 +1084,7 @@ int arpack(
 			{
 				top_suscept[i-1] = top_suscept_subset(&eigf,i);
 
-				double x=0.005501;
+				double x=1; //CHANGE THIS TO CORRECT VOLUME AND 2kappamu"
 				top_suscept[i-1] = top_suscept[i-1]*pow(x,6);
 				
 			//	_Complex double Q_sqred2=Q_squared_2(&eigf, i-1);
@@ -1114,14 +1092,15 @@ int arpack(
 				//_Complex double renrm_top_sus=renorm_top_suscept_alt(&eigf,i);
 				if(g_proc_id == g_stdio_proc)
 				{ 
-					//									printf("WE ARE INSIDE");	
 					printf("%d %.10e %.10e \n",i,creal(top_suscept[i-1]),cimag(top_suscept[i-1]));
 			//		printf("n Q_sqred1 %d %.10e %.10e \n",i,creal(Q_sqred1),cimag(Q_sqred1));
 			//		printf("n Q_sqred2 %d %.10e %.10e \n",i,creal(Q_sqred2),cimag(Q_sqred2));
 				//	printf("n renrm_top_sus %d %.10e %.10e \n",i,creal(renrm_top_sus),cimag(renrm_top_sus));
 				}		
 			}
-			_Complex double temp= top_suscept_product_print(&eigf,nconv,v_g5_logfile);
+			//_Complex double temp= top_suscept_product_print(&eigf,nconv,v_g5_logfile);
+		       v_g5_product_print(v_g5_product,hevals,nconv,v_g5_logfile);
+
 			free(top_suscept);
 		}
 		/////////////////////////////////////////////// 
